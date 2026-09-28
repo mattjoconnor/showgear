@@ -418,6 +418,54 @@ textarea.inp{resize:vertical;min-height:40px;line-height:1.45;}
 .toasts{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9500;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100% - 32px);}
 .toast{background:#111;color:#fff;border-left:3px solid var(--green);padding:10px 14px;font-family:var(--f-mono);font-size:var(--t-small);font-weight:700;letter-spacing:.02em;animation:tin .25s ease-out both;}
 .toast.bad{border-left-color:var(--red);}
+.toast.act{pointer-events:auto;display:flex;align-items:center;gap:10px;border-left-color:var(--amber);padding:8px 8px 8px 14px;max-width:calc(100vw - 24px);flex-wrap:wrap;}
+.toast-msg{flex:1 1 180px;}
+.toast-btn{font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;background:#fff;color:#111;border:none;padding:0 12px;min-height:36px;cursor:pointer;}
+.toast-btn.ghost{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.25);}
+/* Matrix */
+.main-body.mx-mode{overflow:hidden;display:flex;flex-direction:column;}
+.mx-view{flex:1;min-height:0;display:flex;flex-direction:column;}
+.mx-bar{position:static;flex-wrap:wrap;flex-shrink:0;}
+.mx-chips{display:flex;align-items:stretch;flex-wrap:wrap;min-height:44px;flex:1 1 auto;}
+.mx-sep{width:1px;background:var(--line-md);margin:8px 4px;}
+.mx-pchip i{display:inline-block;width:8px;height:8px;background:var(--pc);margin-right:6px;}
+.mx-range.on{background:var(--amber);color:#111;font-weight:800;}
+.mx-legend{display:flex;flex-wrap:wrap;gap:6px 18px;padding:10px clamp(16px,2.2vw,28px);font-family:var(--f-mono);font-size:var(--t-micro);font-weight:700;letter-spacing:var(--ls-normal);text-transform:uppercase;color:var(--tx-3);flex-shrink:0;}
+.mx-legend span{display:flex;align-items:center;gap:7px;}
+.mx-key{display:inline-grid;place-items:center;width:16px;height:14px;font-style:normal;font-size:9px;font-weight:800;color:var(--ink);border:1px solid var(--line-hi);}
+.mx-key.a{background:var(--ink);border-color:var(--ink);}
+.mx-key.b{border:2px solid var(--ink);}
+.mx-key.e{background:repeating-linear-gradient(45deg,var(--line-hi) 0 2px,transparent 2px 5px);}
+.mx-scroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;margin:0 clamp(12px,2.2vw,28px) clamp(12px,2vh,20px);border:1px solid var(--line-md);background:var(--surface);}
+.mx{border-collapse:separate;border-spacing:0;font-family:var(--f-mono);}
+.mx th,.mx td{padding:0;border-bottom:1px solid var(--line);}
+.mx thead th{position:sticky;top:0;z-index:3;background:var(--surface);border-bottom:2px solid var(--ink);}
+.mx thead th.mx-corner{left:0;z-index:5;text-align:left;vertical-align:bottom;padding:0 12px 8px;font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-3);border-right:1px solid var(--line-md);}
+.mx-ch{min-width:56px;padding:0 4px 8px;vertical-align:bottom;text-align:center;border-right:1px solid var(--line);}
+.mx-cbar{display:block;height:4px;background:var(--pc);margin:0 -4px 8px;}
+.mx-code{display:block;font-weight:800;font-size:var(--t-small);letter-spacing:var(--ls-normal);color:var(--ink);white-space:nowrap;}
+.mx-cnt{display:block;font-size:10px;font-weight:700;color:var(--tx-3);margin-top:2px;}
+.mx-rh{position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--line-md);text-align:left;min-width:128px;max-width:170px;}
+.mx-dev{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:4px 12px;background:none;border:none;color:var(--ink);font-family:var(--f-mono);text-align:left;cursor:pointer;}
+.mx-dev b{font-weight:800;font-size:var(--t-small);}
+.mx-dev span{font-size:10px;font-weight:600;color:var(--tx-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.mx-dot{width:7px;height:7px;flex-shrink:0;}
+.mx-dot.none{border:1px solid var(--line-hi);}
+.mx-td{text-align:center;border-right:1px solid var(--line);}
+.mx-x{display:grid;place-items:center;width:40px;height:36px;margin:4px auto;border:1px solid var(--line-md);background:transparent;cursor:pointer;font-family:var(--f-mono);font-size:12px;font-weight:800;color:var(--pc);transition:background .15s,border-color .15s,transform .1s;}
+.mx-x:active{transform:scale(.9);}
+.mx-x.a{background:var(--pc);border-color:var(--pc);}
+.mx-x.b{border:2px solid var(--pc);}
+.mx-x.elsewhere{background:repeating-linear-gradient(45deg,var(--line-md) 0 3px,transparent 3px 7px);}
+.mx-x.anchor{outline:3px solid var(--amber);outline-offset:1px;}
+.mx-x:disabled{cursor:default;}
+.mx-row:hover th,.mx-row:hover td{background:var(--surface-2);}
+.mx-grp th,.mx-grp td{background:var(--surface-2);border-bottom:1px solid var(--line-md);}
+.mx-gbtn{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:0 12px;background:none;border:none;color:var(--ink);font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+.mx-gbtn b{color:var(--tx-3);}
+.mx-gchev{display:inline-block;transition:transform .15s;}
+.mx-gchev.open{transform:rotate(90deg);}
+.mx-none{padding:24px;text-align:center;font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-3);}
 @media (max-width:640px){.toasts{top:calc(96px + env(safe-area-inset-top,0px));}}
 @keyframes tin{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none;}.psec-chev{transition:none;}}
@@ -546,7 +594,8 @@ const UI = {
   tab:'board', edit:false, loaded:false, loadError:null, user:null, role:null,
   f:{q:'', type:'all', status:'all', prod:'all'},
   selecting:false, sel:new Set(),
-  open:{}, showArchived:false
+  open:{}, showArchived:false,
+  mx:{q:'', types:{BP:true,MIC:true,IFB:true}, hideProds:new Set(), closed:{}, range:false, anchor:null}
 };
 const UIKEY = 'showgear.ui';
 try{ UI.open = JSON.parse(localStorage.getItem(UIKEY)||'{}').open || {}; }catch(e){}
@@ -588,7 +637,7 @@ function countFor(pid){
    RENDER
    ════════════════════════════════════════════════════════════ */
 function render(){
-  const tabs = [['board','Board'],['inventory','Inventory'],['productions','Productions'],['log','Log']];
+  const tabs = [['board','Board'],['matrix','Matrix'],['inventory','Inventory'],['productions','Productions'],['log','Log']];
   if(!tabs.some(t=>t[0]===UI.tab)) UI.tab='board';
   $('#nav').innerHTML = tabs.map(([k,l])=>`<button class="ribbon-tab${UI.tab===k?' active':''}" data-action="tab" data-tab="${k}">${l}</button>`).join('');
   document.querySelector('.r-right').innerHTML =
@@ -596,7 +645,10 @@ function render(){
     + (UI.user?`<button class="mode-btn" data-action="sign-out" title="Sign out">Sign out</button>`:'');
   const main = $('#main');
   const st = main.scrollTop;
-  main.innerHTML = !UI.loaded ? viewLoading() : ({board:viewBoard, inventory:viewInventory, productions:viewProductions, log:viewLog})[UI.tab]();
+  const mxOld = main.querySelector('.mx-scroll'), mxPos = mxOld ? [mxOld.scrollTop, mxOld.scrollLeft] : null;
+  main.classList.toggle('mx-mode', UI.loaded && UI.tab==='matrix');
+  main.innerHTML = !UI.loaded ? viewLoading() : ({board:viewBoard, matrix:viewMatrix, inventory:viewInventory, productions:viewProductions, log:viewLog})[UI.tab]();
+  const mxNew = main.querySelector('.mx-scroll'); if(mxNew && mxPos){ mxNew.scrollTop = mxPos[0]; mxNew.scrollLeft = mxPos[1]; }
   main.classList.toggle('selecting', UI.selecting);
   main.scrollTop = st;
   renderBulk();
@@ -699,6 +751,129 @@ function viewBoard(){
 function tile(d,p,compact){
   return `<button class="tile" style="--pc:${p.color}" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${d.assignee?' — '+esc(d.assignee):''}${d.note?' — '+esc(d.note):''}">
     <span class="tile-strip"></span><span class="tile-in"><span class="tile-label">${esc(d.label)}</span>${compact?'':`<span class="tile-who${d.assignee?'':' none'}">${d.assignee?esc(d.assignee):'—'}</span>`}</span>${d.note?'<i class="tile-note" aria-label="Has note"></i>':''}</button>`;
+}
+
+/* ── MATRIX (crosspoint routing, Dante-style) ──
+   Productions across the top, devices down the side. A device can sit in
+   only one production, like a Dante receiver channel with one source. */
+function mxMatch(d, qq){
+  if(!qq) return true;
+  const p = prodById(d.productionId);
+  return [d.label, d.assignee, d.note, p&&p.name, p&&p.code].join(' ').toLowerCase().includes(qq);
+}
+function mxVisibleRows(){
+  const M = UI.mx, qq = M.q.trim().toLowerCase();
+  return TYPES.filter(t=>M.types[t]).map(t=>[t, DB.devices.filter(d=>d.type===t && mxMatch(d,qq)).sort(byLabel)]);
+}
+function viewMatrix(){
+  const M = UI.mx, all = activeProds(), prods = all.filter(p=>!M.hideProds.has(p.id));
+  let h = header('Matrix', UI.edit ? 'Tap a crosspoint: assigned, then backup, then clear' : 'Where every device is routed');
+  h += `<div class="fbar mx-bar">
+    <label class="f-search"><input id="mxq" type="search" placeholder="Search device or person" value="${esc(M.q)}" autocomplete="off" aria-label="Search devices"></label>
+    <div class="mx-chips">
+      ${TYPES.map(t=>`<button class="f-pill${M.types[t]?' active':''}" data-action="mx-type" data-t="${t}" aria-pressed="${M.types[t]}">${t}</button>`).join('')}
+      ${all.length?'<span class="mx-sep"></span>':''}
+      ${all.map(p=>`<button class="f-pill mx-pchip${M.hideProds.has(p.id)?'':' active'}" data-action="mx-prod" data-id="${p.id}" style="--pc:${p.color}" aria-pressed="${!M.hideProds.has(p.id)}"><i></i>${esc(p.code||p.name)}</button>`).join('')}
+      ${UI.edit&&prods.length?`<span class="mx-sep"></span><button class="f-pill mx-range${M.range?' on':''}" data-action="mx-range">${M.range?(M.anchor?'Tap last cell':'Tap first cell'):'Range'}</button>`:''}
+    </div></div>`;
+  if(!all.length) return `<div class="mx-view">${h}<div class="view-pad"><div class="empty"><h4>No active productions</h4><p>Create a production, then route gear to it here.</p>${UI.edit?'<button class="btn primary" data-action="new-prod">New production</button>':''}</div></div></div>`;
+  if(!prods.length) return `<div class="mx-view">${h}<div class="view-pad"><div class="empty"><h4>All productions hidden</h4><p>Turn one back on above.</p></div></div></div>`;
+  const groups = mxVisibleRows();
+  h += `<div class="mx-legend"><span><i class="mx-key a"></i>Assigned</span><span><i class="mx-key b">B</i>Backup</span><span><i class="mx-key e"></i>On another production</span></div>`;
+  h += `<div class="mx-scroll"><table class="mx"><thead><tr><th class="mx-corner" scope="col">Device</th>${prods.map(p=>{
+      const c = countFor(p.id), a = TYPES.filter(t=>M.types[t]).reduce((n,t)=>n+c[t].a,0), b = TYPES.filter(t=>M.types[t]).reduce((n,t)=>n+c[t].b,0);
+      return `<th class="mx-ch" scope="col" style="--pc:${p.color}" title="${esc(p.name)}"><span class="mx-cbar"></span><span class="mx-code">${esc(p.code||p.name)}</span><span class="mx-cnt">${a}${b?'+'+b:''}</span></th>`;
+    }).join('')}</tr></thead><tbody>`;
+  let any = false;
+  groups.forEach(([t, list])=>{
+    if(!list.length) return; any = true;
+    const closed = !!M.closed[t];
+    h += `<tr class="mx-grp"><th class="mx-rh" scope="rowgroup"><button type="button" class="mx-gbtn" data-action="mx-group" data-t="${t}" aria-expanded="${!closed}"><span class="mx-gchev${closed?'':' open'}">›</span><span class="chip ${t}">${t}</span>${TYPE_NAME[t]}<b>${list.length}</b></button></th><td colspan="${prods.length}"></td></tr>`;
+    if(closed) return;
+    list.forEach(d=>{
+      const cur = prodById(d.productionId);
+      h += `<tr class="mx-row"><th class="mx-rh" scope="row"><button type="button" class="mx-dev" data-action="open-dev" data-id="${d.id}">${cur?`<i class="mx-dot" style="background:${cur.color}" title="${esc(cur.name)}"></i>`:'<i class="mx-dot none"></i>'}<b>${esc(d.label)}</b>${d.assignee?`<span>${esc(d.assignee)}</span>`:''}</button></th>${prods.map(p=>mxCell(d,p)).join('')}</tr>`;
+    });
+  });
+  if(!any) h += `<tr><td class="mx-none" colspan="${prods.length+1}">Nothing matches. Try a different search or filter.</td></tr>`;
+  h += `</tbody></table></div>`;
+  return `<div class="mx-view">${h}</div>`;
+}
+function mxCell(d, p){
+  const here = d.productionId===p.id, st = here ? d.status : 'none';
+  const anchor = UI.mx.anchor && UI.mx.anchor.id===d.id && UI.mx.anchor.pid===p.id;
+  const cls = 'mx-x' + (st==='assigned'?' a':st==='backup'?' b':'') + (d.productionId&&!here?' elsewhere':'') + (anchor?' anchor':'');
+  const what = st==='assigned'?'assigned':st==='backup'?'backup':(d.productionId?'on another production':'not routed');
+  return `<td class="mx-td"><button type="button" class="${cls}" style="--pc:${p.color}" ${UI.edit?`data-action="mx-cell" data-id="${d.id}" data-p="${p.id}"`:'disabled'} aria-label="${esc(d.label+' to '+(p.code||p.name)+': '+what)}">${st==='backup'?'B':''}</button></td>`;
+}
+
+/* Toast with action buttons — nothing happens unless a button is tapped */
+function actionToast(msg, actions){
+  const box = $('#toasts'); box.querySelectorAll('.toast.act').forEach(x=>x.remove());
+  const t = document.createElement('div'); t.className = 'toast act';
+  t.innerHTML = `<span class="toast-msg">${esc(msg)}</span>` + actions.map((a,i)=>`<button type="button" class="toast-btn" data-i="${i}">${esc(a.label)}</button>`).join('') + `<button type="button" class="toast-btn ghost" data-i="x">Cancel</button>`;
+  box.appendChild(t); while(box.children.length>2) box.firstChild.remove();
+  const timer = setTimeout(()=>t.remove(), 9000);
+  t.addEventListener('click', e=>{ const b = e.target.closest('.toast-btn'); if(!b) return; clearTimeout(timer); t.remove(); if(b.dataset.i!=='x') actions[+b.dataset.i].fn(); });
+}
+
+/* Batched log: rapid taps become one line per production/action */
+const MXLOG = {}; let mxLogTimer = null;
+function mxQueueLog(label, status, pid){
+  const k = status==='unassigned' ? 'u|' : status+'|'+pid;
+  (MXLOG[k] = MXLOG[k] || []).push(label);
+  clearTimeout(mxLogTimer); mxLogTimer = setTimeout(mxFlushLog, 2500);
+}
+function mxFlushLog(){
+  const keys = Object.keys(MXLOG); if(!keys.length) return;
+  keys.forEach(k=>{
+    const [st, pid] = k.split('|'), p = prodById(pid);
+    const labels = [...new Set(MXLOG[k])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    logEvent(`${compactLabels(labels)} ${st==='u'?'unassigned':(st==='backup'?'set as backup for ':'assigned to ')+(p?p.name:'?')}`);
+    delete MXLOG[k];
+  });
+  save();
+}
+function mxApply(list, pid, status){
+  list.forEach(d=>{
+    const keep = d.productionId===pid ? d.assignee : '';   // keep "Host" when cycling within a show; clear when moving
+    setDeviceState(d, status, status==='unassigned'?null:pid, keep);
+    mxQueueLog(d.label, status, pid);
+  });
+  save(); render();
+}
+function mxTap(devId, pid){
+  const d = devById(devId), p = prodById(pid); if(!d || !p) return;
+  if(UI.mx.range) return mxRangeTap(d, p);
+  if(d.productionId && d.productionId!==pid){
+    const from = prodById(d.productionId);
+    actionToast(`${d.label} is ${d.status==='backup'?'a backup for':'on'} ${from?from.name:'another production'}`,
+      [{label:'Move here', fn:()=>{ mxApply([d], pid, 'assigned'); toast(`${d.label} moved to ${p.name}`); }}]);
+    return;
+  }
+  const next = d.productionId!==pid ? 'assigned' : d.status==='assigned' ? 'backup' : 'unassigned';
+  mxApply([d], pid, next);
+}
+function mxRangeTap(d, p){
+  const M = UI.mx;
+  if(!M.anchor){ M.anchor = {id:d.id, pid:p.id}; render(); return; }
+  const a = devById(M.anchor.id);
+  if(M.anchor.pid!==p.id || !a || a.type!==d.type){
+    M.anchor = {id:d.id, pid:p.id}; render();
+    toast('Range needs both ends in the same column and device type. Start set here.', true); return;
+  }
+  const list = (mxVisibleRows().find(([t])=>t===d.type)||[null,[]])[1];
+  let i = list.findIndex(x=>x.id===a.id), j = list.findIndex(x=>x.id===d.id); if(i>j) [i,j] = [j,i];
+  const span = list.slice(i, j+1);
+  const targets = span.filter(x=>!(x.productionId===p.id && x.status==='assigned'));
+  const conflicts = targets.filter(x=>x.productionId && x.productionId!==p.id);
+  M.range = false; M.anchor = null;
+  const done = arr => { if(!arr.length){ render(); toast('Nothing to change'); return; } mxApply(arr, p.id, 'assigned'); toast(`${span[0].label} to ${span[span.length-1].label}: ${arr.length} assigned to ${p.name}`); };
+  if(conflicts.length){
+    render();
+    actionToast(`${conflicts.length} of ${span.length} ${conflicts.length===1?'is':'are'} on another production`,
+      [{label:'Move them too', fn:()=>done(targets)}, {label:'Skip them', fn:()=>done(targets.filter(x=>!conflicts.includes(x)))}]);
+  } else done(targets);
 }
 
 /* ── INVENTORY ── */
@@ -1344,9 +1519,18 @@ document.addEventListener('click', e=>{
   const el = e.target.closest('[data-action]'); if(!el) return;
   const a = el.dataset.action, id = el.dataset.id;
   switch(a){
-    case 'tab': UI.tab = el.dataset.tab; if(UI.tab!=='inventory'){UI.selecting=false;UI.sel.clear();} $('#main').scrollTop=0; render(); break;
+    case 'tab': UI.tab = el.dataset.tab; if(UI.tab!=='inventory'){UI.selecting=false;UI.sel.clear();} UI.mx.range=false; UI.mx.anchor=null; $('#main').scrollTop=0; render(); break;
+    case 'mx-cell': if(UI.edit) mxTap(id, el.dataset.p); break;
+    case 'mx-type': {
+      const t = el.dataset.t, on = TYPES.filter(x=>UI.mx.types[x]);
+      if(UI.mx.types[t] && on.length===1){ toast('At least one type has to stay on'); break; }
+      UI.mx.types[t] = !UI.mx.types[t]; render(); break;
+    }
+    case 'mx-prod': UI.mx.hideProds.has(id) ? UI.mx.hideProds.delete(id) : UI.mx.hideProds.add(id); if(UI.mx.anchor&&UI.mx.anchor.pid===id) UI.mx.anchor=null; render(); break;
+    case 'mx-range': UI.mx.range = !UI.mx.range; UI.mx.anchor = null; render(); if(UI.mx.range) toast('Range: tap the first cell, then the last'); break;
+    case 'mx-group': UI.mx.closed[el.dataset.t] = !UI.mx.closed[el.dataset.t]; render(); break;
     case 'toggle-mode':
-      if(UI.edit){ UI.edit=false; UI.selecting=false; UI.sel.clear(); render(); toast('Locked. View only.'); }
+      if(UI.edit){ UI.edit=false; UI.selecting=false; UI.sel.clear(); UI.mx.range=false; UI.mx.anchor=null; render(); toast('Locked. View only.'); }
       else openPin();
       break;
     case 'close-modal': closeModal(); break;
@@ -1411,6 +1595,12 @@ document.addEventListener('keydown', e=>{
 });
 $('#overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
 document.addEventListener('input', e=>{
+  if(e.target.id==='mxq'){
+    UI.mx.q = e.target.value;
+    const pos = e.target.selectionStart; render();
+    const q = $('#mxq'); q.focus(); try{ q.setSelectionRange(pos,pos); }catch(_){}
+    return;
+  }
   if(e.target.id==='q'){
     UI.f.q = e.target.value;
     const pos = e.target.selectionStart; render();
