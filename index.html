@@ -187,6 +187,41 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .ended-line{margin-top:6px;}
 .psec:not(.open) .ended-line{display:block;}
 .move-row{display:flex;gap:8px;}
+/* Production page (QR) */
+.focus-mode #nav,.focus-mode .r-right{display:none;}
+.fx{max-width:780px;margin:0 auto;padding:14px 12px calc(28px + env(safe-area-inset-bottom,0px));}
+.fx-head{background:var(--surface);border:1px solid var(--line-md);border-top:6px solid var(--pc);padding:16px 16px 14px;margin-bottom:12px;box-shadow:inset 0 1px 0 var(--edge);}
+.fx-kicker{font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-3);}
+.fx-title{margin:0;font-family:var(--f-ui);font-size:clamp(1.9rem,8vw,2.8rem);font-weight:900;letter-spacing:-.02em;line-height:1;color:var(--ink);overflow-wrap:anywhere;}
+.fx-meta{margin-top:8px;font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-2);}
+.fx-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:14px;}
+.fx-count{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;padding:8px 10px;border:1px solid var(--line-md);background:var(--surface-2);}
+.fx-count b{font-family:var(--f-ui);font-size:1.5rem;font-weight:900;line-height:1;color:var(--ink);}
+.fx-count small{font-family:var(--f-mono);font-size:var(--t-micro);font-weight:700;color:var(--amber);}
+.fx-count span{flex-basis:100%;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:700;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-3);}
+.fx-count.none b{color:var(--tx-3);}
+.fx-sec{background:var(--surface);border:1px solid var(--line-md);margin-bottom:12px;}
+.fx-sec-h{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);}
+.fx-sec-t{font-family:var(--f-ui);font-weight:800;font-size:1.05rem;color:var(--ink);}
+.fx-sec-n{margin-left:auto;font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
+.fx-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:10px 12px 12px;}
+.fx-chip{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;min-height:46px;padding:6px 8px;background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--pc);cursor:pointer;text-align:left;box-shadow:inset 1px 0 0 var(--edge);}
+.fx-chip b{font-family:var(--f-ui);font-size:1rem;font-weight:800;color:var(--ink);line-height:1.1;}
+.fx-chip em,.fx-row em{font-style:normal;font-family:var(--f-mono);font-size:9px;font-weight:800;color:var(--tx-3);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fx-list{padding:2px 12px 8px;}
+.fx-row{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:0;background:none;border:none;border-bottom:1px solid var(--line);cursor:pointer;text-align:left;color:var(--ink);}
+.fx-row:last-child{border-bottom:none;}
+.fx-row b{flex:0 0 70px;font-family:var(--f-ui);font-size:1rem;font-weight:800;}
+.fx-row span{flex:1;min-width:0;font-family:var(--f-ui);font-size:1rem;font-weight:600;color:var(--tx-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fx-row span i{font-style:normal;color:var(--tx-3);}
+.fx-row em{flex-shrink:0;max-width:34%;}
+.fx-bk{border-top:1px solid var(--line);}
+.fx-bk-h{padding:10px 12px 0;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--amber);}
+.fx-miss{padding:18px 16px;} .fx-miss h4{margin:0 0 6px;font-family:var(--f-ui);font-size:1.2rem;color:var(--ink);} .fx-miss p{margin:0;font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-2);}
+.fx-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 2px;font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
+.fx-full{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--ink);text-decoration:none;}
+@media (min-width:560px){ .fx{padding:22px 20px 36px;} .fx-grid{grid-template-columns:repeat(6,minmax(0,1fr));} .fx-list{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;} .fx-row:nth-last-child(2):nth-child(odd){border-bottom:none;} }
+@media (min-width:760px){ .fx-grid{grid-template-columns:repeat(8,minmax(0,1fr));} }
 .arch-list{display:flex;flex-direction:column;}
 .arch-row{display:flex;align-items:center;gap:14px;padding:10px clamp(12px,1.4vw,16px);border-top:1px solid var(--line);}
 .arch-row i{width:8px;height:8px;background:var(--pc);flex-shrink:0;box-shadow:inset 0 0 0 1px var(--edge);}
@@ -642,6 +677,7 @@ async function loadAll(){
   ]);
   const err = p.error || d.error || l.error; if(err) throw err;
   DB = {productions:p.data.map(rowToProd), devices:d.data.map(rowToDev), log:l.data};
+  UI.lastLoad = new Date();
 }
 
 /* Change tracking: edits mark what they touched; save() flushes just those */
@@ -704,7 +740,7 @@ function describeState(d){
    UI STATE
    ════════════════════════════════════════════════════════════ */
 const UI = {
-  tab:'board', edit:false, loaded:false, loadError:null, user:null, role:null,
+  tab:'board', edit:false, loaded:false, focus:null, lastLoad:null, loadError:null, user:null, role:null,
   f:{q:'', type:'all', status:'all', prod:'all'},
   selecting:false, sel:new Set(),
   open:{}, showArchived:false,
@@ -781,6 +817,8 @@ function countFor(pid){
    RENDER
    ════════════════════════════════════════════════════════════ */
 function render(){
+  document.body.classList.toggle('focus-mode', !!UI.focus);
+  if(UI.focus){ const m=$('#main'), st=m.scrollTop; m.classList.remove('mx-mode'); m.innerHTML = UI.loaded ? viewFocus() : viewLoading(); m.scrollTop = st; return; }
   const tabs = [['board','Board'],['matrix','Matrix'],['log','Log']];
   if(!tabs.some(t=>t[0]===UI.tab)) UI.tab='board';
   $('#nav').innerHTML = tabs.map(([k,l])=>`<button class="ribbon-tab${UI.tab===k?' active':''}" data-action="tab" data-tab="${k}">${l}</button>`).join('');
@@ -794,6 +832,35 @@ function render(){
   main.innerHTML = !UI.loaded ? viewLoading() : (({board:viewBoard, matrix:viewMatrix, log:viewLog})[UI.tab]||viewBoard)();
   const mxNew = main.querySelector('.mx-scroll'); if(mxNew && mxPos){ mxNew.scrollTop = mxPos[0]; mxNew.scrollLeft = mxPos[1]; }
   main.scrollTop = st;
+}
+
+/* ── PRODUCTION PAGE: one show's gear, laid out for a phone ── */
+function viewFocus(){
+  const key = UI.focus.key;
+  const p = DB.productions.find(x=>(x.code||'').toUpperCase()===key || x.name.toUpperCase()===key);
+  const foot = `<div class="fx-foot"><span>${UI.lastLoad?'Updated '+UI.lastLoad.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}):''}</span><a class="fx-full" href="${esc(APP_URL())}">Full board</a></div>`;
+  if(!p || p.archived) return `<div class="fx"><div class="fx-sec fx-miss"><h4>${p?esc(p.name)+' has wrapped':'Show not found'}</h4><p>${p?'It’s been archived, so it no longer holds any gear.':'This code doesn’t match an active production.'}</p></div>${foot}</div>`;
+  const c = countFor(p.id), others = d => sortedProds(d).filter(x=>x.id!==p.id).map(x=>x.code||x.name);
+  const tag = d => { const o = others(d); return o.length ? `<em>+${esc(o.join(' '))}</em>` : ''; };
+  const block = list => list.some(d=>d.assignee)
+    ? `<div class="fx-list">${list.map(d=>`<button type="button" class="fx-row" data-action="open-dev" data-id="${d.id}"><b>${esc(d.label)}</b><span>${d.assignee?esc(d.assignee):'<i>—</i>'}</span>${tag(d)}</button>`).join('')}</div>`
+    : `<div class="fx-grid">${list.map(d=>`<button type="button" class="fx-chip" data-action="open-dev" data-id="${d.id}"><b>${esc(d.label)}</b>${tag(d)}</button>`).join('')}</div>`;
+  let h = `<div class="fx" style="--pc:${p.color};--pfg:${fgOn(p.color)}">
+    <header class="fx-head"><h1 class="fx-title">${esc(p.name)}</h1>
+      <div class="fx-meta">${[fmtRange(p), p.location].filter(Boolean).map(esc).join('  /  ')}</div>
+      <div class="fx-counts">${TYPES.map(t=>`<div class="fx-count${c[t].a||c[t].b?'':' none'}"><b>${c[t].a}</b>${c[t].b?`<small>+${c[t].b} bkp</small>`:''}<span>${TYPE_NAME[t]}</span></div>`).join('')}</div>
+    </header>`;
+  let any = false;
+  TYPES.forEach(t=>{
+    const prim = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='assigned').sort(byLabel);
+    const bk = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='backup').sort(byLabel);
+    if(!prim.length && !bk.length) return; any = true;
+    h += `<section class="fx-sec"><div class="fx-sec-h"><span class="chip ${t}">${t}</span><span class="fx-sec-t">${TYPE_NAME[t]}</span><span class="fx-sec-n">${prim.length} assigned${bk.length?`, ${bk.length} backup`:''}</span></div>
+      ${prim.length?block(prim):''}
+      ${bk.length?`<div class="fx-bk"><div class="fx-bk-h">Backups</div>${block(bk)}</div>`:''}</section>`;
+  });
+  if(!any) h += `<div class="fx-sec fx-miss"><h4>No gear assigned yet</h4><p>Check back once devices are routed to this show.</p></div>`;
+  return h + foot + `</div>`;
 }
 
 function viewLoading(){
@@ -1158,8 +1225,13 @@ function openDevice(id){
     save(); closeModal(); render(); toast(`${d.label} saved`);
   };
   $('#dDel').onclick = () => openDeleteDevice(d);
+  enterSaves(['#dLabel','#aWho'], '#dSave');
 }
 
+/* Enter in a text field presses Save (buttons and chips keep their own Enter behaviour) */
+function enterSaves(fields, saveSel){
+  fields.forEach(sel=>{ const el=$(sel); if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.isComposing){ e.preventDefault(); $(saveSel).click(); } }); });
+}
 /* Deleting a device is rare (a mistyped Add gear range), so it takes a code */
 const DELETE_CODE = '1633';
 function openDeleteDevice(d){
@@ -1256,6 +1328,7 @@ function openProduction(id){
     <div class="err" id="pErr"></div>`,
     foot:`${p?'<button class="btn danger" id="pDel">Delete</button>':''}<span class="spacer"></span><button class="btn outline" data-action="close-modal">Cancel</button><button class="btn primary" id="pSave">${p?'Save':'Create'}</button>`});
   let chosen = color;
+  enterSaves(['#pName','#pCode','#pLoc','#pStart','#pEnd'], '#pSave');
   if($('#pUp')){
     $('#pUp').onclick = () => { toast(moveProd(p.id,-1) ? `${p.name} moved up` : 'Already at the top'); };
     $('#pDown').onclick = () => { toast(moveProd(p.id,1) ? `${p.name} moved down` : 'Already at the bottom'); };
@@ -1325,12 +1398,8 @@ async function refreshRole(user){
 function applyDeepLink(){
   const q = new URLSearchParams(location.search);
   const key = (q.get('prod')||'').trim().toUpperCase(), type = (q.get('type')||'').trim().toUpperCase();
-  const p = key ? DB.productions.find(x=>!x.archived && ((x.code||'').toUpperCase()===key || x.name.toUpperCase()===key)) : null;
   if(TYPES.includes(type)){ UI.tab='matrix'; UI.mx.type=type; return; }
-  if(p){
-    UI.tab='board'; UI.open[p.id]=true;
-    setTimeout(()=>{ const sec=document.getElementById('ps-'+p.id); if(sec) $('#main').scrollTo({top: sec.offsetTop - 8}); }, 60);
-  }
+  if(key) UI.focus = {key};   // a show's QR: open that show's own page
 }
 
 /* ── ADD-GEAR PICKER (from a production section) ── */
@@ -1492,7 +1561,7 @@ function pdfHeader(doc, title, sub, color, qrText){
   doc.setFontSize(22); doc.text(title, 36, 52);
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(170,170,170); doc.text(sub, 36, 67);
   doc.setFontSize(8); doc.text('Exported '+longStamp(), qrText ? W-36-66-14 : W-36, 26, {align:'right'});
-  if(qrText){ doc.setFontSize(7); doc.text('Scan for the live board', W-36-66-14, 38, {align:'right'}); }
+  if(qrText){ doc.setFontSize(7); doc.text(qrText===APP_URL() ? 'Scan for the live board' : 'Scan for the live gear list', W-36-66-14, 38, {align:'right'}); }
 }
 function pdfFooter(doc){
   const n = doc.internal.getNumberOfPages(), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
@@ -1655,7 +1724,7 @@ async function exportQrPdf(onlyPid){
 /* On-screen QR: scan straight off a phone or laptop */
 function openQr(pid){
   const p = pid ? prodById(pid) : null, url = p ? prodUrl(p) : APP_URL();
-  openModal({title: p ? esc(p.name) : 'Gear board', sub: p ? 'Opens this production on the board' : 'Opens the whole board', color: p ? p.color : undefined,
+  openModal({title: p ? esc(p.name) : 'Gear board', sub: p ? 'Opens this show’s live gear list' : 'Opens the whole board', color: p ? p.color : undefined,
     body:`<div class="qr-wrap">${qrSvg(url, 240)}<div class="qr-url">${esc(url)}</div></div>`,
     foot:`<button class="btn outline" id="qrCopy">Copy link</button><span class="spacer"></span><button class="btn primary" id="qrPdf">Print QR (PDF)</button>`});
   $('#qrPdf').onclick = () => { closeModal(); exportQrPdf(p ? p.id : null); };
