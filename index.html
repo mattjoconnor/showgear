@@ -192,7 +192,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .sc-h{font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-2);margin-bottom:8px;}
 .sc-h span{color:var(--tx-3);font-weight:700;margin-left:6px;}
 .sc-keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
-.sc-key{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:64px;padding:8px;border:1px solid rgba(0,0,0,.15);box-shadow:inset 0 0 0 1px var(--edge);overflow:hidden;}
+.sc-key{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;min-height:64px;padding:8px;border:1px solid rgba(0,0,0,.15);box-shadow:inset 0 0 0 1px var(--edge);overflow:hidden;}
 .sc-key b{font-family:var(--f-ui);font-size:.95rem;font-weight:900;line-height:1.05;overflow-wrap:anywhere;}
 .sc-key .sc-n{position:absolute;top:4px;left:6px;font-family:var(--f-mono);font-size:9px;font-weight:800;opacity:.6;}
 .sc-key .sc-kind{font-family:var(--f-mono);font-size:9px;font-weight:800;letter-spacing:var(--ls-wide);opacity:.7;}
@@ -202,7 +202,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .sc-key .sc-mark{position:absolute;top:0;right:0;border-top-width:16px;border-left-width:16px;}
 .sc-pending{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;font-family:var(--f-mono);font-size:var(--t-small);line-height:1.4;color:var(--tx-1);}
 .sc-pending .sc-mark{margin-top:3px;}
-.sc-none{margin:0;font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-3);}
+.sc-none{margin:10px 0 0;font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-3);}
 .sc-tag{font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
 .sc-note{margin:4px 0 0;font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
 .inp:disabled{opacity:.75;}
@@ -742,8 +742,7 @@ function scKeys(d){
 function scKeysHTML(d){
   if(!scLinked(d)) return '';
   const c = scClaim(d);
-  if(!c) return `<div class="sc-box"><div class="sc-h">ShowComm</div><p class="sc-none">Not claimed on the ShowComm cart right now.</p></div>`;
-  const keys = scKeys(d), anyKey = keys.some(k=>k.on||k.pend);
+  const keys = c ? scKeys(d) : [0,1,2,3].map(()=>({on:null, pend:null}));   // unclaimed: four empty keys
   const cell = (k,i) => {
     const on = k.on, mark = k.pend ? `<span class="sc-mark" title="Change requested"></span>` : '';
     return on
@@ -752,7 +751,8 @@ function scKeysHTML(d){
   };
   const pending = keys.map((k,i)=>k.pend ? `Key ${i+1} → ${k.pend.clear ? 'clear' : esc(k.pend.label)}` : null).filter(Boolean);
   return `<div class="sc-box"><div class="sc-h">Programmed keys <span>from ShowComm</span></div>
-    ${anyKey ? `<div class="sc-keys">${keys.map(cell).join('')}</div>` : '<p class="sc-none">No keys requested yet.</p>'}
+    <div class="sc-keys">${keys.map(cell).join('')}</div>
+    ${c ? '' : '<p class="sc-none">Not claimed on the ShowComm cart right now.</p>'}
     ${pending.length ? `<p class="sc-pending"><span class="sc-mark"></span>Requested, not yet programmed: ${pending.join(', ')}</p>` : ''}</div>`;
 }
 
