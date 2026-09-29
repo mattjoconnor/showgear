@@ -187,6 +187,25 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .ended-line{margin-top:6px;}
 .psec:not(.open) .ended-line{display:block;}
 .move-row{display:flex;gap:8px;}
+/* ShowComm link (read-only) */
+.sc-box{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+.sc-h{font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-2);margin-bottom:8px;}
+.sc-h span{color:var(--tx-3);font-weight:700;margin-left:6px;}
+.sc-keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+.sc-key{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:64px;padding:8px;border:1px solid rgba(0,0,0,.15);box-shadow:inset 0 0 0 1px var(--edge);overflow:hidden;}
+.sc-key b{font-family:var(--f-ui);font-size:.95rem;font-weight:900;line-height:1.05;overflow-wrap:anywhere;}
+.sc-key .sc-n{position:absolute;top:4px;left:6px;font-family:var(--f-mono);font-size:9px;font-weight:800;opacity:.6;}
+.sc-key .sc-kind{font-family:var(--f-mono);font-size:9px;font-weight:800;letter-spacing:var(--ls-wide);opacity:.7;}
+.sc-key.empty{background:var(--surface-2);color:var(--tx-3);border-color:var(--line-md);}
+.sc-key.empty b{font-size:.8rem;font-weight:700;}
+.sc-mark{display:inline-block;width:0;height:0;border-top:12px solid var(--amber);border-left:12px solid transparent;flex-shrink:0;}
+.sc-key .sc-mark{position:absolute;top:0;right:0;border-top-width:16px;border-left-width:16px;}
+.sc-pending{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;font-family:var(--f-mono);font-size:var(--t-small);line-height:1.4;color:var(--tx-1);}
+.sc-pending .sc-mark{margin-top:3px;}
+.sc-none{margin:0;font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-3);}
+.sc-tag{font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
+.sc-note{margin:4px 0 0;font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
+.inp:disabled{opacity:.75;}
 /* Production page (QR) */
 .focus-mode #nav,.focus-mode .r-right{display:none;}
 .fx{max-width:780px;margin:0 auto;padding:14px 12px calc(28px + env(safe-area-inset-bottom,0px));}
@@ -668,6 +687,75 @@ function labelRanges(labels){
 }
 const prodsOf = d => d.pids.map(prodById).filter(Boolean);
 const prodNames = d => prodsOf(d).map(p=>p.name).join(' + ');
+/* ── SHOWCOMM LINK (read-only) ──
+   For productions linked to ShowComm (showcomm_production_id), beltpacks show the crew
+   name claimed on the ShowComm cart and the 4 keys actually programmed on the pack.
+   Nothing is ever written back; a ShowComm hiccup never blocks ShowGear. */
+let SC = {loaded:false, claims:{}, reqs:[], opts:{PLs:[], IFBs:[]}};
+async function loadShowComm(){
+  const ids = [...new Set(DB.productions.filter(p=>p.showcommId && !p.archived).map(p=>p.showcommId))];
+  if(!ids.length || !SB){ SC = {loaded:true, claims:{}, reqs:[], opts:SC.opts}; return; }
+  try{
+    const [c, r, o] = await Promise.all([
+      SB.from('device_claims').select('device_id,crew_name,status,claimed_at,production_id').in('production_id', ids).eq('device_type','beltpack').in('status',['pending','confirmed']),
+      SB.from('key_requests').select('device_id,production_id,status,note,created_at').in('production_id', ids).in('status',['open','fulfilled']).order('created_at',{ascending:true}),
+      SB.from('etk_options').select('data').eq('key','main').maybeSingle()
+    ]);
+    if(c.error || r.error) throw (c.error || r.error);
+    const claims = {};
+    (c.data||[]).forEach(x=>{ const k = x.production_id+'|'+x.device_id; if(!claims[k] || x.claimed_at > claims[k].claimed_at) claims[k] = {name:x.crew_name, claimed_at:x.claimed_at}; });
+    const od = o && !o.error && o.data && o.data.data;
+    SC = {loaded:true, claims, reqs:r.data||[], opts: od && Array.isArray(od.PLs) ? od : SC.opts};
+  }catch(e){ console.warn('ShowComm link unavailable:', e); SC.loaded = true; }
+}
+function scClaim(d){
+  if(d.type!=='BP' || !SC.loaded) return null;
+  for(const p of prodsOf(d)){ if(p.showcommId && !p.archived){ const c = SC.claims[p.showcommId+'|'+d.label]; if(c) return {...c, sid:p.showcommId}; } }
+  return null;
+}
+const scLinked = d => d.type==='BP' && prodsOf(d).some(p=>p.showcommId && !p.archived);
+/* Name to show: the ShowComm crew name when the pack is claimed, otherwise ShowGear's own */
+const who = d => { const c = scClaim(d); return c ? c.name : d.assignee; };
+function scOpt(note){
+  const m = /^(.+) \((PL|IFB)\)$/.exec(note||''); if(!m) return null;
+  const cat = m[2]==='PL' ? 'PLs' : 'IFBs', o = (SC.opts[cat]||[]).find(x=>x.label===m[1]);
+  const rgb = a => Array.isArray(a) ? `rgb(${a.join(',')})` : null;
+  return {label:m[1], kind:m[2], bg: o ? rgb(o.bg) : '#6E6E6E', fg: o ? rgb(o.fg) : '#FFFFFF'};
+}
+/* Per key: what's actually on the pack (last confirmed) and any requested change not yet confirmed */
+function scKeys(d){
+  const c = scClaim(d); if(!c) return null;
+  const keys = [0,1,2,3].map(()=>({on:null, pend:null}));
+  SC.reqs.filter(r=>r.production_id===c.sid && r.device_id===d.label && r.created_at >= c.claimed_at).forEach(r=>{
+    let entries; try{ entries = JSON.parse(r.note||'[]'); }catch(e){ return; }
+    if(!Array.isArray(entries)) return;
+    entries.forEach(en=>{
+      const k = keys[en.keyIndex]; if(!k) return;
+      const v = en.note==='CLEAR' ? {clear:true} : scOpt(en.note); if(!v) return;
+      if(r.status==='fulfilled'){ k.on = v.clear ? null : v; k.pend = null; }
+      else k.pend = v;
+    });
+  });
+  keys.forEach(k=>{ if(k.pend && !k.pend.clear && k.on && k.pend.label===k.on.label && k.pend.kind===k.on.kind) k.pend = null; });
+  return keys;
+}
+function scKeysHTML(d){
+  if(!scLinked(d)) return '';
+  const c = scClaim(d);
+  if(!c) return `<div class="sc-box"><div class="sc-h">ShowComm</div><p class="sc-none">Not claimed on the ShowComm cart right now.</p></div>`;
+  const keys = scKeys(d), anyKey = keys.some(k=>k.on||k.pend);
+  const cell = (k,i) => {
+    const on = k.on, mark = k.pend ? `<span class="sc-mark" title="Change requested"></span>` : '';
+    return on
+      ? `<div class="sc-key${k.pend?' has-pend':''}" style="background:${on.bg};color:${on.fg}">${mark}<span class="sc-n">${i+1}</span><b>${esc(on.label)}</b><span class="sc-kind">${on.kind}</span></div>`
+      : `<div class="sc-key empty${k.pend?' has-pend':''}">${mark}<span class="sc-n">${i+1}</span><b>Empty</b></div>`;
+  };
+  const pending = keys.map((k,i)=>k.pend ? `Key ${i+1} → ${k.pend.clear ? 'clear' : esc(k.pend.label)}` : null).filter(Boolean);
+  return `<div class="sc-box"><div class="sc-h">Programmed keys <span>from ShowComm</span></div>
+    ${anyKey ? `<div class="sc-keys">${keys.map(cell).join('')}</div>` : '<p class="sc-none">No keys requested yet.</p>'}
+    ${pending.length ? `<p class="sc-pending"><span class="sc-mark"></span>Requested, not yet programmed: ${pending.join(', ')}</p>` : ''}</div>`;
+}
+
 async function loadAll(){
   if(!SB) throw new Error('Supabase unavailable');
   const [p,d,l] = await Promise.all([
@@ -677,6 +765,7 @@ async function loadAll(){
   ]);
   const err = p.error || d.error || l.error; if(err) throw err;
   DB = {productions:p.data.map(rowToProd), devices:d.data.map(rowToDev), log:l.data};
+  await loadShowComm();
   UI.lastLoad = new Date();
 }
 
@@ -769,6 +858,7 @@ function fmtRange(p){
 }
 function fmtTime(iso){
   const d = new Date(iso);
+  if(!iso || isNaN(d)) return '—';
   return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
 }
 function toast(msg, bad){
@@ -842,8 +932,8 @@ function viewFocus(){
   if(!p || p.archived) return `<div class="fx"><div class="fx-sec fx-miss"><h4>${p?esc(p.name)+' has wrapped':'Show not found'}</h4><p>${p?'It’s been archived, so it no longer holds any gear.':'This code doesn’t match an active production.'}</p></div>${foot}</div>`;
   const c = countFor(p.id), others = d => sortedProds(d).filter(x=>x.id!==p.id).map(x=>x.code||x.name);
   const tag = d => { const o = others(d); return o.length ? `<em>+${esc(o.join(' '))}</em>` : ''; };
-  const block = list => list.some(d=>d.assignee)
-    ? `<div class="fx-list">${list.map(d=>`<button type="button" class="fx-row" data-action="open-dev" data-id="${d.id}"><b>${esc(d.label)}</b><span>${d.assignee?esc(d.assignee):'<i>—</i>'}</span>${tag(d)}</button>`).join('')}</div>`
+  const block = list => list.some(d=>who(d))
+    ? `<div class="fx-list">${list.map(d=>`<button type="button" class="fx-row" data-action="open-dev" data-id="${d.id}"><b>${esc(d.label)}</b><span>${who(d)?esc(who(d)):'<i>—</i>'}</span>${tag(d)}</button>`).join('')}</div>`
     : `<div class="fx-grid">${list.map(d=>`<button type="button" class="fx-chip" data-action="open-dev" data-id="${d.id}"><b>${esc(d.label)}</b>${tag(d)}</button>`).join('')}</div>`;
   let h = `<div class="fx" style="--pc:${p.color};--pfg:${fgOn(p.color)}">
     <header class="fx-head"><h1 class="fx-title">${esc(p.name)}</h1>
@@ -937,10 +1027,10 @@ function viewBoard(){
         return `<div class="tcols n${used.length}">${used.map(t=>{
         const prim = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='assigned').sort(byLabel);
         const bk = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='backup').sort(byLabel);
-        const compact = !prim.some(d=>d.assignee);
+        const compact = !prim.some(d=>who(d));
         return `<div class="tcol"><div class="tcol-head"><span class="chip ${t}">${t}</span><span class="tcol-title">${TYPE_NAME[t]}</span><span class="tcol-count">${c[t].a} assigned</span></div>
           ${prim.length?`<div class="tiles${compact?' compact':''}">${prim.map(d=>tile(d,p,compact)).join('')}</div>`:`<div class="tcol-empty">None assigned</div>`}
-          ${bk.length?`<div class="bench"><div class="bench-label">Backups <span>${bk.length}</span></div><div class="bench-chips">${bk.map(d=>`<button class="bchip" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${d.note?' — '+esc(d.note):''}">${esc(d.label)}${d.assignee?`<em>${esc(d.assignee)}</em>`:''}</button>`).join('')}</div></div>`:''}
+          ${bk.length?`<div class="bench"><div class="bench-label">Backups <span>${bk.length}</span></div><div class="bench-chips">${bk.map(d=>`<button class="bchip" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${d.note?' — '+esc(d.note):''}">${esc(d.label)}${who(d)?`<em>${esc(who(d))}</em>`:''}</button>`).join('')}</div></div>`:''}
         </div>`;
       }).join('')}</div>${names.length?`<div class="tcols-none slim">No ${names.join(' or ')}</div>`:''}`;
       })()}</div>
@@ -982,8 +1072,8 @@ function viewBoard(){
 function tile(d,p,compact){
   const others = prodsOf(d).filter(x=>x.id!==p.id);
   const shared = others.length ? `<span class="tile-shared" title="Shared with ${esc(others.map(x=>x.name).join(', '))}">+${esc(others.map(x=>x.code||x.name).join(' '))}</span>` : '';
-  return `<button class="tile${others.length?' is-shared':''}" style="--pc:${p.color};--pfg:${fgOn(p.color)}" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${d.assignee?' — '+esc(d.assignee):''}${d.note?' — '+esc(d.note):''}">
-    ${others.length?`<span class="tile-strip split">${sortedProds(d).map(x=>`<i style="background:${x.color}"></i>`).join('')}</span>`:'<span class="tile-strip"></span>'}<span class="tile-in"><span class="tile-label">${esc(d.label)}</span>${shared}${compact?'':`<span class="tile-who${d.assignee?'':' none'}">${d.assignee?esc(d.assignee):'—'}</span>`}</span>${d.note?'<i class="tile-note" aria-label="Has note"></i>':''}</button>`;
+  return `<button class="tile${others.length?' is-shared':''}" style="--pc:${p.color};--pfg:${fgOn(p.color)}" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${who(d)?' — '+esc(who(d)):''}${d.note?' — '+esc(d.note):''}">
+    ${others.length?`<span class="tile-strip split">${sortedProds(d).map(x=>`<i style="background:${x.color}"></i>`).join('')}</span>`:'<span class="tile-strip"></span>'}<span class="tile-in"><span class="tile-label">${esc(d.label)}</span>${shared}${compact?'':`<span class="tile-who${who(d)?'':' none'}">${who(d)?esc(who(d)):'—'}</span>`}</span>${d.note?'<i class="tile-note" aria-label="Has note"></i>':''}</button>`;
 }
 
 /* ── MATRIX (crosspoint routing, Dante-style) ──
@@ -991,7 +1081,7 @@ function tile(d,p,compact){
    by several productions, like a Dante transmitter feeding several receivers. */
 function mxMatch(d, qq){
   if(!qq) return true;
-  return [d.label, d.assignee, d.note, ...prodsOf(d).map(p=>p.name+' '+p.code)].join(' ').toLowerCase().includes(qq);
+  return [d.label, who(d), d.note, ...prodsOf(d).map(p=>p.name+' '+p.code)].join(' ').toLowerCase().includes(qq);
 }
 function mxVisibleRows(){
   const M = UI.mx, qq = M.q.trim().toLowerCase();
@@ -1017,7 +1107,7 @@ function viewMatrix(){
     }).join('')}</tr></thead><tbody>`;
   list.forEach(d=>{
     const cur = sortedProds(d);
-    h += `<tr class="mx-row"><th class="mx-rh" scope="row"><button type="button" class="mx-dev" data-action="open-dev" data-id="${d.id}"><span class="mx-dots">${cur.length?cur.map(c=>`<i class="mx-dot" style="background:${c.color}" title="${esc(c.name)}"></i>`).join(''):'<i class="mx-dot none"></i>'}</span><b>${esc(d.label)}</b>${d.assignee?`<span>${esc(d.assignee)}</span>`:''}</button></th>${prods.map(p=>mxCell(d,p)).join('')}</tr>`;
+    h += `<tr class="mx-row"><th class="mx-rh" scope="row"><button type="button" class="mx-dev" data-action="open-dev" data-id="${d.id}"><span class="mx-dots">${cur.length?cur.map(c=>`<i class="mx-dot" style="background:${c.color}" title="${esc(c.name)}"></i>`).join(''):'<i class="mx-dot none"></i>'}</span><b>${esc(d.label)}</b>${who(d)?`<span>${esc(who(d))}</span>`:''}</button></th>${prods.map(p=>mxCell(d,p)).join('')}</tr>`;
   });
   if(!list.length) h += `<tr><td class="mx-none" colspan="${prods.length+1}">Nothing matches. Try a different search.</td></tr>`;
   h += `</tbody></table></div>`;
@@ -1198,15 +1288,15 @@ function openDevice(id){
     openModal({title:esc(d.label), sub:TYPE_ONE[d.type], color, body:`<dl class="kv">
       <dt>Status</dt><dd><span class="status ${d.status}">${STATUS_NAME[d.status]}</span></dd>
       <dt>${d.pids.length>1?'Productions':'Production'}</dt><dd>${d.pids.length?esc(prodNames(d)):'<span class="dash">None</span>'}</dd>
-      <dt>Assigned to</dt><dd>${d.assignee?esc(d.assignee):'<span class="dash">None</span>'}</dd>
-      <dt>Updated</dt><dd>${fmtTime(d.updatedAt)}</dd></dl>`,
+      <dt>Assigned to</dt><dd>${who(d)?esc(who(d)):'<span class="dash">None</span>'}${scClaim(d)?' <span class="sc-tag">from ShowComm</span>':''}</dd>
+      <dt>Updated</dt><dd>${fmtTime(d.updatedAt)}</dd></dl>${scKeysHTML(d)}`,
       foot:`<span class="spacer"></span><button class="btn outline" data-action="close-modal">Close</button>`});
     return;
   }
   openModal({title:esc(d.label), sub:TYPE_ONE[d.type]+'  /  updated '+fmtTime(d.updatedAt), color,
     body: assignFields(d.status, d.pids.length ? d.pids : [(activeProds()[0]||{}).id].filter(Boolean), d.assignee, d.note, false) +
       `<div class="divider"></div>
-      <div class="fld"><label class="fld-label" for="dLabel">Label</label><input class="inp" id="dLabel" value="${esc(d.label)}"></div>
+      <div class="fld"><label class="fld-label" for="dLabel">Label</label><input class="inp" id="dLabel" value="${esc(d.label)}"></div>${scKeysHTML(d)}
       <div class="err" id="dErr"></div>`,
     foot:`<button class="btn danger" id="dDel">Delete</button><span class="spacer"></span><button class="btn outline" data-action="close-modal">Cancel</button><button class="btn primary" id="dSave">Save</button>`});
   const getStatus = wireSeg(), getProds = wireProds();
@@ -1219,12 +1309,15 @@ function openDevice(id){
     if(DB.devices.some(x=>x.id!==d.id && x.label.toUpperCase()===label)){ $('#dErr').textContent=label+' already exists.'; return; }
     const renamed = label!==d.label ? d.label : null;
     d.label = label;
-    const change = setDeviceState(d, status, pid, $('#aWho')?.value||'', d.note);
+    const whoEl = $('#aWho'), whoVal = whoEl && !whoEl.disabled ? whoEl.value : d.assignee;   // never save a ShowComm name into ShowGear
+    const change = setDeviceState(d, status, pid, whoVal||'', d.note);
     if(renamed) logEvent(`${label} renamed from ${renamed}`);
     if(change) logEvent(`${d.label} ${change}`);
     save(); closeModal(); render(); toast(`${d.label} saved`);
   };
   $('#dDel').onclick = () => openDeleteDevice(d);
+  const scc = scClaim(d), whoIn = $('#aWho');
+  if(scc && whoIn){ whoIn.value = scc.name; whoIn.disabled = true; whoIn.insertAdjacentHTML('afterend','<p class="sc-note">From ShowComm. The crew member changes this on the cart.</p>'); }
   enterSaves(['#dLabel','#aWho'], '#dSave');
 }
 
@@ -1524,7 +1617,7 @@ async function exportXlsx(){
   X.utils.book_append_sheet(wb, ws1, 'Summary');
   // All gear
   const head = ['Type','Device','Status','Production','Assigned to','Updated'];
-  const rowOf = d => { return [d.type, d.label, STATUS_NAME[d.status], prodNames(d), d.assignee, fmtTime(d.updatedAt)]; };
+  const rowOf = d => { return [d.type, d.label, STATUS_NAME[d.status], prodNames(d), who(d), fmtTime(d.updatedAt)]; };
   const ws2 = X.utils.aoa_to_sheet([head, ...DB.devices.slice().sort(byLabel).map(rowOf)]);
   ws2['!cols']=[{wch:6},{wch:9},{wch:11},{wch:24},{wch:20},{wch:32},{wch:14},{wch:14},{wch:18}];
   ws2['!autofilter']={ref: X.utils.encode_range({s:{r:0,c:0},e:{r:DB.devices.length,c:head.length-1}})};
@@ -1535,7 +1628,7 @@ async function exportXlsx(){
     const rows = [[p.name], [fmtRange(p)+(p.location?'  /  '+p.location:'')], [], ['Type','Device','Status','Assigned to']];
     TYPES.forEach(t=>{
       const list = DB.devices.filter(d=>inProd(d,p.id) && d.type===t).sort((a,b)=>(a.status==='backup')-(b.status==='backup')||byLabel(a,b));
-      list.forEach(d=>rows.push([t, d.label, STATUS_NAME[d.status], d.assignee]));
+      list.forEach(d=>rows.push([t, d.label, STATUS_NAME[d.status], who(d)]));
     });
     const ws = X.utils.aoa_to_sheet(rows); ws['!cols']=[{wch:6},{wch:9},{wch:11},{wch:24}];
     let name = (p.code||p.name).replace(/[\\\/\?\*\[\]:]/g,'').slice(0,31) || 'Production'; let n=2;
@@ -1615,7 +1708,7 @@ async function exportProdPdf(pid){
     const bk = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='backup').sort(byLabel);
     if(!prim.length && !bk.length) return;
     // Each list decides: nothing written in "Assigned to" or "Note"? A compact grid of labels instead of empty columns
-    const isCompact = list => list.every(d=>!d.assignee);
+    const isCompact = list => list.every(d=>!who(d));
     const rowsFor = list => isCompact(list) ? Math.ceil(list.length/COLS) : Math.ceil(list.length/2);
     const est = 24 + (prim.length ? (rowsFor(prim)+1)*ROW+10 : 0) + (bk.length ? (rowsFor(bk)+1)*ROW+10 : 0);
     if(y + est > H - 40 && est < H - 110){ doc.addPage(); y = 50; }   // keep a short section on one page
@@ -1628,7 +1721,7 @@ async function exportProdPdf(pid){
       y = doc.lastAutoTable.finalY + 10;
     };
     const table = (list, head, fill) => {
-      y = twoUp(doc, y, list, [head,'Assigned to'], d=>[lbl(d), d.assignee||''], {0:{cellWidth:92, fontStyle:'bold'}}, fill) + 10;
+      y = twoUp(doc, y, list, [head,'Assigned to'], d=>[lbl(d), who(d)||''], {0:{cellWidth:92, fontStyle:'bold'}}, fill) + 10;
     };
     if(prim.length) (isCompact(prim)?grid:table)(prim, isCompact(prim)?'Assigned':'Device', HEAD_LIGHT);
     if(bk.length) (isCompact(bk)?grid:table)(bk, 'Backup', HEAD_BACKUP);
@@ -1663,7 +1756,7 @@ async function exportChecklistPdf(pid){
     if(y + est > H - 40 && est < H - 110){ doc.addPage(); y = 50; }
     y = sectionTitle(doc, y, TYPE_NAME[t], `${prim.length} assigned${bk.length?', '+bk.length+' backup':''}`);
     const table = (list, head, style) => {
-      y = twoUp(doc, y, list, [head,'Assigned to','Out','In'], d=>[lbl(d), d.assignee||'', '', ''], cols, style,
+      y = twoUp(doc, y, list, [head,'Assigned to','Out','In'], d=>[lbl(d), who(d)||'', '', ''], cols, style,
         {styles:{...TABLE.styles, minCellHeight:20, valign:'middle'}, didDrawCell:box}) + 6;
     };
     if(prim.length) table(prim, 'Device', HEAD_LIGHT);
@@ -1919,6 +2012,9 @@ async function boot(){
     .on('postgres_changes',{event:'*',schema:'public',table:'gear_devices'},refresh)
     .on('postgres_changes',{event:'*',schema:'public',table:'gear_productions'},refresh)
     .on('postgres_changes',{event:'*',schema:'public',table:'gear_log'},refresh)
+    .on('postgres_changes',{event:'*',schema:'public',table:'device_claims'},refresh)
+    .on('postgres_changes',{event:'*',schema:'public',table:'key_requests'},refresh)
+    .on('postgres_changes',{event:'*',schema:'public',table:'etk_options'},refresh)
     .subscribe((status)=>console.log('[ShowGear realtime]', status));
   setInterval(()=>{ if(!document.hidden) refresh(); }, 30000); // safety net if realtime drops
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refresh(); });
