@@ -172,6 +172,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .psec-body{display:none;border-top:1px solid var(--line-md);}
 .psec.open .psec-body{display:block;}
 .tcols{display:grid;grid-template-columns:repeat(3,1fr);}
+.tcols.n2{grid-template-columns:repeat(2,1fr);}
+.tcols.n1{grid-template-columns:1fr;}
+.tcols-none{font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-3);padding:12px clamp(12px,1.4vw,16px);}
+.tcols-none.slim{padding:8px clamp(12px,1.4vw,16px);border-top:1px solid var(--line);}
+.board-tools{display:flex;align-items:center;gap:16px;margin:0 0 10px;min-height:32px;}
+.board-hint{font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
+.psec-drag{display:grid;place-items:center;width:28px;min-height:40px;margin:-6px -4px -6px -8px;font-size:16px;letter-spacing:-3px;color:var(--tx-3);cursor:grab;touch-action:none;user-select:none;flex-shrink:0;}
+.psec-drag:hover{color:var(--ink);}
+.psec.dragging{outline:2px solid var(--ink);outline-offset:2px;box-shadow:0 8px 24px rgba(0,0,0,.35);position:relative;z-index:5;}
+.is-dragging,.is-dragging *{cursor:grabbing !important;user-select:none;}
+.ended-badge{display:inline-block;vertical-align:middle;margin-left:10px;padding:3px 7px;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-2);border:1px solid var(--line-hi);}
+.psec.ended .psec-name{color:var(--tx-2);}
+.ended-line{margin-top:6px;}
+.psec:not(.open) .ended-line{display:block;}
+.move-row{display:flex;gap:8px;}
 .tcol{padding:12px clamp(12px,1.4vw,16px) 14px;border-right:1px solid var(--line);min-width:0;}
 .tcol:last-child{border-right:none;}
 .tcol-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
@@ -555,8 +570,9 @@ const now = () => new Date().toISOString();
 function emptyData(){ return {productions:[], devices:[], log:[]}; }
 let DB = emptyData();
 
-const rowToProd = r => ({id:r.id, name:r.name, code:r.code||'', color:r.color||'#FF5500', start:r.start_date||'', end:r.end_date||'', location:r.location||'', notes:r.notes||'', archived:!!r.archived, createdAt:r.created_at, showcommId:r.showcomm_production_id||null});
-const prodToRow = p => ({id:p.id, name:p.name, code:p.code||'', color:p.color, start_date:p.start||null, end_date:p.end||null, location:p.location||'', notes:p.notes||'', archived:!!p.archived, showcomm_production_id:p.showcommId||null});
+const rowToProd = r => ({id:r.id, name:r.name, code:r.code||'', color:r.color||'#FF5500', start:r.start_date||'', end:r.end_date||'', location:r.location||'', notes:r.notes||'', archived:!!r.archived, createdAt:r.created_at, showcommId:r.showcomm_production_id||null, boardOrder:(typeof r.board_order==='number')?r.board_order:null, hasOrderCol:('board_order' in r)});
+// board_order is only sent once it's been set, so saving still works before the column exists
+const prodToRow = p => Object.assign({id:p.id, name:p.name, code:p.code||'', color:p.color, start_date:p.start||null, end_date:p.end||null, location:p.location||'', notes:p.notes||'', archived:!!p.archived, showcomm_production_id:p.showcommId||null}, p.boardOrder!=null?{board_order:p.boardOrder}:{});
 const rowToDev = r => ({id:r.id, type:r.type, label:r.label, model:r.model||'', serial:r.serial||'', status:r.status, pids:(Array.isArray(r.production_ids)&&r.production_ids.length)?r.production_ids.slice():(r.production_id?[r.production_id]:[]), assignee:r.assignee||'', note:r.note||'', updatedAt:r.updated_at});
 const devToRow = d => ({id:d.id, type:d.type, label:d.label, model:d.model||'', serial:d.serial||'', status:d.status, production_ids:d.pids, production_id:d.pids[0]||null, assignee:d.assignee||'', note:d.note||'', updated_at:d.updatedAt});
 
@@ -723,6 +739,37 @@ function toast(msg, bad){
   const box=$('#toasts'); box.appendChild(t); while(box.children.length>2) box.firstChild.remove(); setTimeout(()=>t.remove(), 2600);
 }
 const activeProds = () => DB.productions.filter(p=>!p.archived).sort((a,b)=>(a.start||'9').localeCompare(b.start||'9') || a.name.localeCompare(b.name));
+/* Board-only order: your drag order first, then any new/unordered shows by date. Matrix, splits and exports keep date order. */
+function boardProds(){
+  const base = activeProds(), idx = new Map(base.map((p,i)=>[p.id,i]));
+  return base.slice().sort((a,b)=>{
+    const ao = a.boardOrder, bo = b.boardOrder;
+    if(ao!=null && bo!=null && ao!==bo) return ao-bo;
+    if(ao!=null && bo==null) return -1;
+    if(ao==null && bo!=null) return 1;
+    return idx.get(a.id)-idx.get(b.id);
+  });
+}
+const orderReady = () => DB.productions.length>0 && DB.productions.every(p=>p.hasOrderCol);
+function setBoardOrder(ids){
+  ids.forEach((id,i)=>{ const p=prodById(id); if(p && p.boardOrder!==i){ p.boardOrder=i; markProd(p); } });
+  logEvent('Board order changed'); save();
+}
+function moveProd(id, dir){
+  const ids = boardProds().map(p=>p.id), i = ids.indexOf(id), j = i+dir;
+  if(i<0 || j<0 || j>=ids.length) return false;
+  [ids[i], ids[j]] = [ids[j], ids[i]]; setBoardOrder(ids); render(); return true;
+}
+const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const isEnded = p => !!(p.end && p.end < todayISO());
+/* Archive a show and free its gear (shared devices just leave this show) */
+function archiveProd(p){
+  const rel = DB.devices.filter(d=>inProd(d,p.id));
+  rel.forEach(d=>setDeviceState(d, d.status, d.pids.filter(x=>x!==p.id), d.assignee));
+  p.archived = true; markProd(p);
+  logEvent(`${p.name} archived${rel.length?`, ${rel.length} device${rel.length===1?'':'s'} released`:''}`);
+  return rel.length;
+}
 function countFor(pid){
   const c = {}; TYPES.forEach(t=>c[t]={a:0,b:0});
   DB.devices.forEach(d=>{ if(inProd(d,pid)){ c[d.type][d.status==='backup'?'b':'a']++; } });
@@ -773,7 +820,7 @@ function openMore(){
 function isOpen(key, dflt){ return Object.prototype.hasOwnProperty.call(UI.open,key) ? UI.open[key] : dflt; }
 function viewBoard(){
   const total = DB.devices.length;
-  const prods = activeProds();
+  const prods = boardProds();
   const exp = {a:'export', label:'Export', hint:'Excel workbook and PDFs'};
   const actions = UI.edit ? `<button class="btn primary" data-action="add-devices">Add gear</button>` : (total?`<button class="btn outline" data-action="export">Export</button>`:'');
   const more = UI.edit ? [...(total?[exp]:[]), {a:'new-prod', label:'New production', hint:'A show or event that holds gear'}] : [];
@@ -793,6 +840,10 @@ function viewBoard(){
       <div class="sum-nums"><span class="b">${b} bkp</span><span>${u} free</span></div></div>`;
   }).join('') + `</div>`;
 
+  if(prods.length){
+    const allOpen = [...prods.map(p=>isOpen(p.id, prods.length===1)), isOpen('_pool', false)].every(Boolean);
+    h += `<div class="board-tools"><button class="lnk" data-action="${allOpen?'collapse-all':'expand-all'}">${allOpen?'Collapse all':'Expand all'}</button>${UI.edit&&prods.length>1?`<span class="board-hint">${orderReady()?'Drag ⋮⋮ to reorder':'Run the board-order SQL to enable reordering'}</span>`:''}</div>`;
+  }
   if(prods.length>1){
     h += `<nav class="jump" aria-label="Jump to production">${prods.map(p=>`<button class="jump-b" data-action="jump" data-id="${p.id}" style="--pc:${p.color};--pfg:${fgOn(p.color)}"><i></i>${esc(p.code||p.name)}</button>`).join('')}</nav>`;
   }
@@ -803,15 +854,21 @@ function viewBoard(){
     const c = countFor(p.id);
     const open = isOpen(p.id, prods.length===1);
     const meta = [p.code && p.code!==p.name ? p.code : '', fmtRange(p), p.location].filter(Boolean).map(esc).join('  /  ');
-    h += `<section class="psec${open?' open':''}" id="ps-${p.id}" style="--pc:${p.color};--pfg:${fgOn(p.color)}">
+    const ended = isEnded(p), canDrag = UI.edit && prods.length>1 && orderReady();
+    h += `<section class="psec${open?' open':''}${ended?' ended':''}" id="ps-${p.id}" data-pid="${p.id}" style="--pc:${p.color};--pfg:${fgOn(p.color)}">
       <div class="psec-hdr" data-action="toggle-prod" data-id="${p.id}" tabindex="0" role="button" aria-expanded="${open}">
+        ${canDrag?`<span class="psec-drag" data-drag="${p.id}" title="Drag to reorder" aria-label="Drag to reorder ${esc(p.name)}">⋮⋮</span>`:''}
         <span class="psec-chev">›</span>
-        <div class="psec-id"><div class="psec-name">${esc(p.name)}</div><div class="psec-meta">${meta}</div>
+        <div class="psec-id"><div class="psec-name">${esc(p.name)}${ended?'<span class="ended-badge">Ended</span>':''}</div><div class="psec-meta">${meta}</div>
+          ${ended&&UI.edit?`<div class="ended-line"><button class="lnk ended-lnk" data-action="archive-ended" data-id="${p.id}">Archive and free its gear</button></div>`:''}
           <div class="psec-acts">${UI.edit?`<button class="lnk" data-action="pick-gear" data-id="${p.id}">+ Add gear</button>`:''}<button class="lnk" data-action="export-prod" data-id="${p.id}">Export PDF</button><button class="lnk" data-action="show-qr" data-id="${p.id}">QR</button></div></div>
         <div class="psec-counts">${TYPES.map(t=>`<div class="pc-cell"><span class="n">${c[t].a}${c[t].b?`<small>+${c[t].b}</small>`:''}</span><span class="t">${t}</span></div>`).join('')}</div>
       </div>
-      <div class="psec-body">
-        <div class="tcols">${TYPES.map(t=>{
+      <div class="psec-body">${(()=>{
+        const used = TYPES.filter(t=>c[t].a||c[t].b), empty = TYPES.filter(t=>!c[t].a&&!c[t].b);
+        if(!used.length) return `<div class="tcols-none">No gear assigned yet${UI.edit?'. Use + Add gear or the Matrix.':'.'}</div>`;
+        const names = empty.map(t=>TYPE_NAME[t].toLowerCase());
+        return `<div class="tcols n${used.length}">${used.map(t=>{
         const prim = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='assigned').sort(byLabel);
         const bk = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='backup').sort(byLabel);
         const compact = !prim.some(d=>d.assignee);
@@ -819,7 +876,8 @@ function viewBoard(){
           ${prim.length?`<div class="tiles${compact?' compact':''}">${prim.map(d=>tile(d,p,compact)).join('')}</div>`:`<div class="tcol-empty">None assigned</div>`}
           ${bk.length?`<div class="bench"><div class="bench-label">Backups <span>${bk.length}</span></div><div class="bench-chips">${bk.map(d=>`<button class="bchip" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${d.note?' — '+esc(d.note):''}">${esc(d.label)}${d.assignee?`<em>${esc(d.assignee)}</em>`:''}</button>`).join('')}</div></div>`:''}
         </div>`;
-      }).join('')}</div></div>
+      }).join('')}</div>${names.length?`<div class="tcols-none slim">No ${names.join(' or ')}</div>`:''}`;
+      })()}</div>
     </section>`;
   });
 
@@ -1285,11 +1343,16 @@ function openProduction(id){
     <div class="fld"><label class="fld-label" for="pLoc">Location</label><input class="inp" id="pLoc" value="${esc(p?.location||'')}" placeholder="Studio, truck, flypack, city" autocomplete="off"></div>
     <div class="fld"><span class="fld-label">Color</span><div class="swatches" id="sw">${PALETTE.map(c=>`<button type="button" class="swatch${c===color?' on':''}" style="background:${c}" data-c="${c}" aria-label="Color ${c}"></button>`).join('')}</div></div>
     <div class="fld"><label class="fld-label" for="pNotes">Notes</label><textarea class="inp" id="pNotes" rows="2">${esc(p?.notes||'')}</textarea></div>
+    ${p&&!p.archived&&activeProds().length>1&&orderReady()?`<div class="fld"><span class="fld-label">Board position</span><div class="move-row"><button type="button" class="btn outline" id="pUp">Move up</button><button type="button" class="btn outline" id="pDown">Move down</button></div></div>`:''}
     ${p?`<label class="toggle-line"><input type="checkbox" id="pArch"${p.archived?' checked':''}> Archived</label>
       ${held&&!p.archived?`<p class="note" style="margin-top:6px">Archiving releases the ${held} device${held===1?'':'s'} it holds back to unassigned.</p>`:''}`:''}
     <div class="err" id="pErr"></div>`,
     foot:`${p?'<button class="btn danger" id="pDel">Delete</button>':''}<span class="spacer"></span><button class="btn outline" data-action="close-modal">Cancel</button><button class="btn primary" id="pSave">${p?'Save':'Create'}</button>`});
   let chosen = color;
+  if($('#pUp')){
+    $('#pUp').onclick = () => { toast(moveProd(p.id,-1) ? `${p.name} moved up` : 'Already at the top'); };
+    $('#pDown').onclick = () => { toast(moveProd(p.id,1) ? `${p.name} moved down` : 'Already at the bottom'); };
+  }
   $('#sw').addEventListener('click', e=>{ const b=e.target.closest('.swatch'); if(!b) return; chosen=b.dataset.c; $('#sw').querySelectorAll('.swatch').forEach(x=>x.classList.toggle('on',x===b)); $('#modal').style.setProperty('--mc',chosen); });
   $('#pSave').onclick = () => {
     const name = $('#pName').value.trim();
@@ -1300,11 +1363,8 @@ function openProduction(id){
     if(p){
       const wasArch = p.archived, arch = $('#pArch').checked;
       Object.assign(p, vals, {archived:arch}); markProd(p);
-      if(arch && !wasArch){
-        const rel = DB.devices.filter(d=>inProd(d,p.id));
-        rel.forEach(d=>setDeviceState(d, d.status, d.pids.filter(x=>x!==p.id), d.assignee));
-        logEvent(`${p.name} archived${rel.length?`, ${rel.length} device${rel.length===1?'':'s'} released`:''}`);
-      } else logEvent(`${p.name} updated`);
+      if(arch && !wasArch){ p.archived = false; archiveProd(p); }
+      else logEvent(`${p.name} updated`);
       toast(`${p.name} saved`);
     } else {
       const np = {id:uid(), ...vals, archived:false, createdAt:now()};
@@ -1790,7 +1850,17 @@ document.addEventListener('click', e=>{
       else openPin();
       break;
     case 'close-modal': closeModal(); break;
-    case 'toggle-prod': UI.open[id] = !el.closest('.psec').classList.contains('open'); saveUI(); render(); break;
+    case 'toggle-prod': if(e.target.closest('.psec-drag')) break; UI.open[id] = !el.closest('.psec').classList.contains('open'); saveUI(); render(); break;
+    case 'expand-all': case 'collapse-all': {
+      const v = a==='expand-all'; boardProds().forEach(p=>UI.open[p.id]=v); UI.open._pool = v; saveUI(); render(); break;
+    }
+    case 'archive-ended': {
+      const p = prodById(id); if(!p) break;
+      const held = DB.devices.filter(d=>inProd(d,p.id)).length, shared = DB.devices.filter(d=>inProd(d,p.id)&&d.pids.length>1).length;
+      confirmModal({title:`Archive ${p.name}?`, body:`It ended ${fmtRange(p)}. ${held?`Its ${held} device${held===1?'':'s'} go back to unassigned${shared?`, except ${shared} shared device${shared===1?'':'s'} that stay on their other shows`:''}.`:'It holds no gear.'} You can still find it under Productions.`, confirm:'Archive'},
+        ()=>{ const n = archiveProd(p); save(); render(); toast(`${p.name} archived${n?`, ${n} device${n===1?'':'s'} freed`:''}`); });
+      break;
+    }
     case 'pick-gear': openPicker(id); break;
     case 'export': openExport(); break;
     case 'more': openMore(); break;
@@ -1866,6 +1936,37 @@ document.addEventListener('input', e=>{
 });
 document.addEventListener('change', e=>{ if(e.target.id==='prodFilter'){ UI.f.prod = e.target.value; render(); } });
 
+/* Board drag-to-reorder: grab ⋮⋮, sections slide live, order saves on release */
+let DRAG = null;
+document.addEventListener('pointerdown', e=>{
+  const h = e.target.closest('.psec-drag'); if(!h || !UI.edit) return;
+  const sec = h.closest('.psec'); if(!sec) return;
+  e.preventDefault(); e.stopPropagation();
+  DRAG = {sec, id:h.dataset.drag, startY:e.clientY, moved:false, pointer:e.pointerId, before:[...document.querySelectorAll('.psec[data-pid]')].map(x=>x.dataset.pid)};
+  sec.classList.add('dragging'); document.body.classList.add('is-dragging');
+  try{ h.setPointerCapture(e.pointerId); }catch(_){}
+});
+document.addEventListener('pointermove', e=>{
+  if(!DRAG || e.pointerId!==DRAG.pointer) return;
+  e.preventDefault();
+  const main = $('#main'), r = main.getBoundingClientRect();
+  if(e.clientY < r.top+60) main.scrollTop -= 12; else if(e.clientY > r.bottom-60) main.scrollTop += 12;
+  const secs = [...document.querySelectorAll('.psec[data-pid]')].filter(x=>x!==DRAG.sec);
+  const next = secs.find(x=>{ const b=x.getBoundingClientRect(); return e.clientY < b.top + b.height/2; });
+  const parent = DRAG.sec.parentNode;
+  if(next){ if(DRAG.sec.nextElementSibling!==next) { parent.insertBefore(DRAG.sec, next); DRAG.moved = true; } }
+  else { const last = secs[secs.length-1]; if(last && last.nextElementSibling!==DRAG.sec){ parent.insertBefore(DRAG.sec, last.nextElementSibling); DRAG.moved = true; } }
+}, {passive:false});
+function endDrag(){
+  if(!DRAG) return;
+  const d = DRAG; DRAG = null;
+  d.sec.classList.remove('dragging'); document.body.classList.remove('is-dragging');
+  const ids = [...document.querySelectorAll('.psec[data-pid]')].map(x=>x.dataset.pid);
+  if(ids.join()!==d.before.join()){ setBoardOrder(ids); render(); toast('Board order saved'); }
+}
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+
 let bootedRealtime = false;
 async function boot(){
   UI.loadError = null; render();
@@ -1877,7 +1978,7 @@ async function boot(){
   try{ const {data} = await SB.auth.getSession(); if(data && data.session){ await refreshRole(data.session.user); render(); } }catch(e){}
   let t = null;
   const refresh = () => { clearTimeout(t); t = setTimeout(async ()=>{
-    if(hasDirty()) return; // don't clobber an edit that's still saving
+    if(hasDirty() || DRAG) return; // don't clobber an edit that's still saving, or a drag in progress
     try{ await loadAll(); UI.loaded = true; UI.loadError = null; }catch(e){ return; }
     const a = document.activeElement; // don't yank focus from someone typing in search
     if(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && $('#main').contains(a)) return;
