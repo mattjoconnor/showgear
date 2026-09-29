@@ -1556,6 +1556,22 @@ const TABLE = {
   headStyles:{fillColor:[236,236,233], textColor:[17,17,17], fontStyle:'bold', fontSize:7.5}
 };
 const HEAD_LIGHT = {fillColor:[236,236,233], textColor:[17,17,17]};
+/* A narrow table printed as two side-by-side columns (top half left, bottom half right) to halve the length */
+function twoUp(doc, y, list, head, row, colStyles, headStyle, extra){
+  const W = doc.internal.pageSize.getWidth(), gap = 16, w = (W-72-gap)/2;
+  const half = Math.ceil(list.length/2), parts = [list.slice(0,half), list.slice(half)];
+  const page = doc.internal.getNumberOfPages ? doc.internal.getNumberOfPages() : 1;
+  let end = y;
+  parts.forEach((part, i)=>{
+    if(!part.length) return;
+    if(doc.setPage) doc.setPage(page);
+    const left = 36 + i*(w+gap);
+    doc.autoTable({...TABLE, ...(extra||{}), startY:y, margin:{left, right:W-left-w}, head:[head], body:part.map(row),
+      headStyles:{...TABLE.headStyles, ...headStyle}, columnStyles:colStyles});
+    end = Math.max(end, doc.lastAutoTable.finalY);
+  });
+  return end;
+}
 const HEAD_BACKUP = {fillColor:[192,120,24], textColor:[255,255,255]};
 function sectionTitle(doc, y, text, right){
   const W = doc.internal.pageSize.getWidth();
@@ -1582,8 +1598,8 @@ async function exportProdPdf(pid){
     const bk = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='backup').sort(byLabel);
     if(!prim.length && !bk.length) return;
     // Each list decides: nothing written in "Assigned to" or "Note"? A compact grid of labels instead of empty columns
-    const isCompact = list => list.every(d=>!d.assignee && !d.note);
-    const rowsFor = list => isCompact(list) ? Math.ceil(list.length/COLS) : list.length;
+    const isCompact = list => list.every(d=>!d.assignee);
+    const rowsFor = list => isCompact(list) ? Math.ceil(list.length/COLS) : Math.ceil(list.length/2);
     const est = 24 + (prim.length ? (rowsFor(prim)+1)*ROW+10 : 0) + (bk.length ? (rowsFor(bk)+1)*ROW+10 : 0);
     if(y + est > H - 40 && est < H - 110){ doc.addPage(); y = 50; }   // keep a short section on one page
     y = sectionTitle(doc, y, TYPE_NAME[t], `${prim.length} assigned${bk.length?', '+bk.length+' backup':''}`);
@@ -1595,11 +1611,7 @@ async function exportProdPdf(pid){
       y = doc.lastAutoTable.finalY + 10;
     };
     const table = (list, head, fill) => {
-      const withNote = list.some(d=>d.note);
-      doc.autoTable({...TABLE, startY:y, head:[[head,'Assigned to',...(withNote?['Note']:[])]],
-        body:list.map(d=>[lbl(d), d.assignee||'', ...(withNote?[d.note||'']:[])]),
-        headStyles:{...TABLE.headStyles, ...fill}, columnStyles:{0:{cellWidth:withNote?110:160, fontStyle:'bold'}, 1:withNote?{cellWidth:150}:{}}});
-      y = doc.lastAutoTable.finalY + 10;
+      y = twoUp(doc, y, list, [head,'Assigned to'], d=>[lbl(d), d.assignee||''], {0:{cellWidth:92, fontStyle:'bold'}}, fill) + 10;
     };
     if(prim.length) (isCompact(prim)?grid:table)(prim, isCompact(prim)?'Assigned':'Device', HEAD_LIGHT);
     if(bk.length) (isCompact(bk)?grid:table)(bk, 'Backup', HEAD_BACKUP);
@@ -1618,44 +1630,30 @@ async function exportChecklistPdf(pid){
   const doc = new jsPDF({unit:'pt', format:'letter'});
   const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
   pdfHeader(doc, p.name+' checklist', [fmtRange(p), p.location].filter(Boolean).join('  /  '), p.color, prodUrl(p));
-  let y = 108;
+  let y = 100;
   const also = d => sortedProds(d).filter(x=>x.id!==p.id).map(x=>x.code||x.name);
   const lbl = d => { const a = also(d); return a.length ? `${d.label}  +${a.join(' ')}` : d.label; };
   const box = (data) => { if(data.section==='body' && (data.column.index===2 || data.column.index===3)){
       const s=10, cx=data.cell.x+(data.cell.width-s)/2, cy=data.cell.y+(data.cell.height-s)/2;
       doc.setDrawColor(60,60,60); doc.setLineWidth(.8); doc.rect(cx, cy, s, s, 'S'); } };
-  const cols = {0:{cellWidth:110, fontStyle:'bold'}, 1:{cellWidth:140}, 2:{cellWidth:40, halign:'center'}, 3:{cellWidth:40, halign:'center'}, 4:{cellWidth:56}};
+  const cols = {0:{cellWidth:92, fontStyle:'bold'}, 2:{cellWidth:30, halign:'center'}, 3:{cellWidth:30, halign:'center'}};
   let any = false;
   TYPES.forEach(t=>{
     const prim = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='assigned').sort(byLabel);
     const bk = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='backup').sort(byLabel);
     if(!prim.length && !bk.length) return; any = true;
-    const est = 24 + (prim.length ? (prim.length+1)*22+10 : 0) + (bk.length ? (bk.length+1)*22+10 : 0);
+    const est = 24 + (prim.length ? (Math.ceil(prim.length/2)+1)*21+6 : 0) + (bk.length ? (Math.ceil(bk.length/2)+1)*21+6 : 0);
     if(y + est > H - 40 && est < H - 110){ doc.addPage(); y = 50; }
     y = sectionTitle(doc, y, TYPE_NAME[t], `${prim.length} assigned${bk.length?', '+bk.length+' backup':''}`);
     const table = (list, head, style) => {
-      doc.autoTable({...TABLE, startY:y, head:[[head,'Assigned to','Out','In','Initials','Note']],
-        body:list.map(d=>[lbl(d), d.assignee||'', '', '', '', d.note||'']), headStyles:{...TABLE.headStyles, ...style},
-        styles:{...TABLE.styles, minCellHeight:22, valign:'middle'}, columnStyles:cols, didDrawCell:box});
-      y = doc.lastAutoTable.finalY + 10;
+      y = twoUp(doc, y, list, [head,'Assigned to','Out','In'], d=>[lbl(d), d.assignee||'', '', ''], cols, style,
+        {styles:{...TABLE.styles, minCellHeight:20, valign:'middle'}, didDrawCell:box}) + 6;
     };
     if(prim.length) table(prim, 'Device', HEAD_LIGHT);
     if(bk.length) table(bk, 'Backup', HEAD_BACKUP);
-    y += 14;
+    y += 16;
   });
   if(!any){ doc.setFontSize(10); doc.setTextColor(120,120,120); doc.text('No gear assigned yet.', 36, y); }
-  else {
-    if(y > H - 110){ doc.addPage(); y = 60; }
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(17,17,17);
-    const half = (W-72)/2;
-    [['Checked out by', 36], ['Returned by', 36+half+12]].forEach(([label, x])=>{
-      doc.text(label, x, y+18); doc.setDrawColor(120,120,120); doc.setLineWidth(.6);
-      doc.line(x, y+40, x+half-110, y+40); doc.line(x+half-96, y+40, x+half-12, y+40);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(120,120,120);
-      doc.text('Name', x, y+50); doc.text('Date', x+half-96, y+50);
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(17,17,17);
-    });
-  }
   pdfFooter(doc);
   await saveFile(`ShowGear-${slug(p.code||p.name)}-checklist-${stamp()}.pdf`, doc.output('blob'));
 }
