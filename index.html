@@ -494,7 +494,7 @@ textarea.inp{resize:vertical;min-height:40px;line-height:1.45;}
 .mx-x.elsewhere{background:repeating-linear-gradient(45deg,var(--line-md) 0 3px,transparent 3px 7px);}
 .mx-x.anchor{outline:3px solid var(--amber);outline-offset:1px;}
 .mx-dots{display:flex;gap:2px;flex-shrink:0;}
-.tile-shared{margin-left:6px;font-size:9px;font-weight:800;letter-spacing:var(--ls-normal);color:var(--tx-3);vertical-align:middle;}
+.tile-shared{display:block;margin-top:3px;max-width:100%;font-family:var(--f-mono);font-size:9px;font-weight:800;line-height:1.15;letter-spacing:var(--ls-normal);color:var(--tx-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fld-hint{font-style:normal;font-weight:600;letter-spacing:0;text-transform:none;color:var(--tx-3);margin-left:6px;}
 .pchips{display:flex;flex-wrap:wrap;gap:6px;}
 .pchip{display:flex;align-items:center;gap:7px;min-height:40px;padding:0 12px;font-family:var(--f-mono);font-size:var(--t-small);font-weight:800;letter-spacing:var(--ls-normal);background:transparent;color:var(--ink);border:1px solid var(--line-hi);cursor:pointer;}
@@ -848,7 +848,7 @@ function tile(d,p,compact){
   const others = prodsOf(d).filter(x=>x.id!==p.id);
   const shared = others.length ? `<span class="tile-shared" title="Shared with ${esc(others.map(x=>x.name).join(', '))}">+${esc(others.map(x=>x.code||x.name).join(' '))}</span>` : '';
   return `<button class="tile${others.length?' is-shared':''}" style="--pc:${p.color};--pfg:${fgOn(p.color)}" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${d.assignee?' — '+esc(d.assignee):''}${d.note?' — '+esc(d.note):''}">
-    ${others.length?`<span class="tile-strip split">${sortedProds(d).map(x=>`<i style="background:${x.color}"></i>`).join('')}</span>`:'<span class="tile-strip"></span>'}<span class="tile-in"><span class="tile-label">${esc(d.label)}${shared}</span>${compact?'':`<span class="tile-who${d.assignee?'':' none'}">${d.assignee?esc(d.assignee):'—'}</span>`}</span>${d.note?'<i class="tile-note" aria-label="Has note"></i>':''}</button>`;
+    ${others.length?`<span class="tile-strip split">${sortedProds(d).map(x=>`<i style="background:${x.color}"></i>`).join('')}</span>`:'<span class="tile-strip"></span>'}<span class="tile-in"><span class="tile-label">${esc(d.label)}</span>${shared}${compact?'':`<span class="tile-who${d.assignee?'':' none'}">${d.assignee?esc(d.assignee):'—'}</span>`}</span>${d.note?'<i class="tile-note" aria-label="Has note"></i>':''}</button>`;
 }
 
 /* ── MATRIX (crosspoint routing, Dante-style) ──
