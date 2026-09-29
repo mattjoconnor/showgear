@@ -202,6 +202,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .sc-key .sc-mark{position:absolute;top:0;right:0;border-top-width:16px;border-left-width:16px;}
 .sc-pending{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;font-family:var(--f-mono);font-size:var(--t-small);line-height:1.4;color:var(--tx-1);}
 .sc-pending .sc-mark{margin-top:3px;}
+.sc-latch{margin-top:3px;padding:1px 5px;font-family:var(--f-mono);font-size:8.5px;font-weight:800;letter-spacing:.06em;background:rgba(0,0,0,.72);color:#fff;}
 .sc-none{margin:10px 0 0;font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-3);}
 .sc-tag{font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
 .sc-note{margin:4px 0 0;font-family:var(--f-mono);font-size:var(--t-micro);color:var(--tx-3);}
@@ -722,34 +723,47 @@ function scOpt(note){
   const rgb = a => Array.isArray(a) ? `rgb(${a.join(',')})` : null;
   return {label:m[1], kind:m[2], bg: o ? rgb(o.bg) : '#6E6E6E', fg: o ? rgb(o.fg) : '#FFFFFF'};
 }
-/* Per key: what's actually on the pack (last confirmed) and any requested change not yet confirmed */
+/* Keys belong to the pack, matching ShowComm: `on` is the last CONFIRMED value across every holder
+   (what's physically programmed); `pend` is a change the current holder asked for, not yet confirmed */
+const scSid = d => { if(d.type!=='BP') return null; const p = prodsOf(d).find(x=>x.showcommId && !x.archived); return p ? p.showcommId : null; };
 function scKeys(d){
-  const c = scClaim(d); if(!c) return null;
-  const keys = [0,1,2,3].map(()=>({on:null, pend:null}));
-  SC.reqs.filter(r=>r.production_id===c.sid && r.device_id===d.label && r.created_at >= c.claimed_at).forEach(r=>{
+  const sid = scSid(d); if(!sid || !SC.loaded) return null;
+  const c = scClaim(d);
+  const keys = [0,1,2,3].map(()=>({on:null, pend:null, onAt:'', pendAt:''}));
+  SC.reqs.filter(r=>r.production_id===sid && r.device_id===d.label).forEach(r=>{
     let entries; try{ entries = JSON.parse(r.note||'[]'); }catch(e){ return; }
     if(!Array.isArray(entries)) return;
     entries.forEach(en=>{
       const k = keys[en.keyIndex]; if(!k) return;
       const v = en.note==='CLEAR' ? {clear:true} : scOpt(en.note); if(!v) return;
-      if(r.status==='fulfilled'){ k.on = v.clear ? null : v; k.pend = null; }
-      else k.pend = v;
+      if(!v.clear) v.latch = !!en.latch && v.kind==='PL';
+      if(r.status==='fulfilled'){ k.on = v.clear ? null : v; k.onAt = r.created_at; }
+      else if(c && r.created_at >= c.claimed_at){ k.pend = v; k.pendAt = r.created_at; }
     });
   });
-  keys.forEach(k=>{ if(k.pend && !k.pend.clear && k.on && k.pend.label===k.on.label && k.pend.kind===k.on.kind) k.pend = null; });
+  keys.forEach(k=>{
+    if(k.pend && k.onAt && k.onAt > k.pendAt) k.pend = null;
+    if(k.pend && k.pend.clear && !k.on) k.pend = null;
+    if(k.pend && !k.pend.clear && k.on && k.pend.label===k.on.label && k.pend.kind===k.on.kind && k.pend.latch===k.on.latch) k.pend = null;
+  });
   return keys;
 }
 function scKeysHTML(d){
   if(!scLinked(d)) return '';
   const c = scClaim(d);
-  const keys = c ? scKeys(d) : [0,1,2,3].map(()=>({on:null, pend:null}));   // unclaimed: four empty keys
+  const keys = scKeys(d) || [0,1,2,3].map(()=>({on:null, pend:null}));   // what's physically on the pack, claimed or not
   const cell = (k,i) => {
     const on = k.on, mark = k.pend ? `<span class="sc-mark" title="Change requested"></span>` : '';
     return on
-      ? `<div class="sc-key${k.pend?' has-pend':''}" style="background:${on.bg};color:${on.fg}">${mark}<span class="sc-n">${i+1}</span><b>${esc(on.label)}</b><span class="sc-kind">${on.kind}</span></div>`
+      ? `<div class="sc-key${k.pend?' has-pend':''}" style="background:${on.bg};color:${on.fg}">${mark}<span class="sc-n">${i+1}</span><b>${esc(on.label)}</b><span class="sc-kind">${on.kind}</span>${on.latch?'<span class="sc-latch">LATCH</span>':''}</div>`
       : `<div class="sc-key empty${k.pend?' has-pend':''}">${mark}<span class="sc-n">${i+1}</span><b>Empty</b></div>`;
   };
-  const pending = keys.map((k,i)=>k.pend ? `Key ${i+1} → ${k.pend.clear ? 'clear' : esc(k.pend.label)}` : null).filter(Boolean);
+  const pending = keys.map((k,i)=>{
+    if(!k.pend) return null;
+    if(k.pend.clear) return `Key ${i+1} → clear`;
+    if(k.on && k.pend.label===k.on.label && k.pend.kind===k.on.kind) return `Key ${i+1} → latch ${k.pend.latch?'on':'off'}`;
+    return `Key ${i+1} → ${esc(k.pend.label)}${k.pend.latch?' (latch)':''}`;
+  }).filter(Boolean);
   return `<div class="sc-box"><div class="sc-h">Programmed keys <span>from ShowComm</span></div>
     <div class="sc-keys">${keys.map(cell).join('')}</div>
     ${c ? '' : '<p class="sc-none">Not claimed on the ShowComm cart right now.</p>'}
