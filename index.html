@@ -43,9 +43,11 @@
   /* Device type colors — BP/IFB exact from ShowComm GLOBAL_OPTIONS */
   --bp-fg:rgb(0,255,12); --ifb-fg:rgb(169,212,152); --mic-fg:rgb(90,200,250);
   --chip-bg:#000;
+  --edge:rgba(0,0,0,.22);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
+    --edge:rgba(255,255,255,.14);
     --ribbon:#000;
     --bg:#131313; --surface:#1C1C1C; --surface-2:#232323;
     --ink:#F2F2F0; --ink-inv:#111111;
@@ -57,6 +59,7 @@
   }
 }
 :root[data-theme="dark"]{
+  --edge:rgba(255,255,255,.14);
   --ribbon:#000;
   --bg:#131313; --surface:#1C1C1C; --surface-2:#232323;
   --ink:#F2F2F0; --ink-inv:#111111;
@@ -128,11 +131,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 
 /* ─── TYPE CHIP / STATUS ─── */
 .chip{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:20px;padding:0 6px;background:var(--chip-bg);font-family:var(--f-mono);font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}
-.chip.BP{color:var(--bp-fg);} .chip.IFB{color:var(--ifb-fg);} .chip.MIC{color:var(--mic-fg);}
+.chip.BP,.chip.IFB,.chip.MIC{color:#FFFFFF;}
 .status{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;white-space:nowrap;}
-.status::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
-.status.assigned{color:var(--green);} .status.backup{color:var(--amber);} .status.unassigned{color:var(--tx-3);}
-.pdot{display:inline-block;width:8px;height:8px;flex-shrink:0;}
+.status::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0;box-sizing:border-box;}
+.status.assigned{color:var(--ink);}
+.status.backup{color:var(--ink);}
+.status.backup::before{content:'B';width:14px;height:14px;border-radius:0;background:none;border:1.5px solid currentColor;display:inline-grid;place-items:center;font-size:9px;font-weight:800;line-height:1;letter-spacing:0;}
+.status.unassigned{color:var(--tx-3);}
+.status.unassigned::before{background:none;border:1.5px solid currentColor;}
+.pdot{display:inline-block;width:8px;height:8px;flex-shrink:0;box-shadow:inset 0 0 0 1px var(--edge);}
 
 /* ─── SUMMARY STRIP ─── */
 .summary{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line-md);background:var(--surface);margin-bottom:14px;}
@@ -143,13 +150,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .sum-big small{font-size:.8rem;font-weight:800;color:var(--tx-3);margin-left:1px;}
 .sum-bar{display:flex;height:5px;background:var(--line);margin-bottom:7px;overflow:hidden;}
 .sum-bar i{display:block;height:100%;}
-.sum-bar .a{background:var(--green);} .sum-bar .b{background:var(--amber);}
+.sum-bar .a{background:var(--ink);} .sum-bar .b{background:var(--amber);}
 .sum-nums{display:flex;justify-content:space-between;gap:6px;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:700;color:var(--tx-2);white-space:nowrap;}
 .sum-nums .b{color:var(--amber);}
 @media (max-width:420px){.sum-type{padding:9px 9px;}.sum-big{font-size:1.15rem;}.summary .chip{min-width:30px;padding:0 4px;}}
 
 /* ─── PRODUCTION SECTIONS (board) ─── */
-.psec{background:var(--surface);border:1px solid var(--line-md);border-left:5px solid var(--pc,#888);margin-bottom:10px;}
+.psec{background:var(--surface);border:1px solid var(--line-md);border-left:5px solid var(--pc,#888);margin-bottom:10px;box-shadow:inset 1px 0 0 var(--edge);}
 .psec-hdr{display:flex;align-items:center;gap:12px;padding:12px clamp(12px,1.6vw,18px);cursor:pointer;user-select:none;min-height:58px;}
 .psec-hdr:hover{background:var(--hover);}
 .psec-chev{font-family:var(--f-mono);font-size:.9rem;color:var(--tx-3);transition:transform .15s;width:12px;flex-shrink:0;}
@@ -173,7 +180,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;}
 .tile{display:flex;background:var(--surface-2);border:1px solid var(--line);border-bottom:2px solid var(--line-md);cursor:pointer;text-align:left;min-width:0;padding:0;width:100%;}
 .tile:hover{border-color:var(--line-hi);}
-.tile-strip{width:4px;flex-shrink:0;background:var(--pc,#888);}
+.tile-strip{width:4px;flex-shrink:0;background:var(--pc,#888);box-shadow:inset -1px 0 0 var(--edge);}
+.tile-strip.split{display:flex;flex-direction:column;background:none;width:5px;}
+.tile-strip.split i{flex:1;}
 .tile-in{padding:7px 8px 6px;min-width:0;flex:1;}
 .tile-label{font-family:var(--f-ui);font-size:.95rem;font-weight:800;letter-spacing:-.01em;line-height:1;color:var(--ink);}
 .tile-who{font-family:var(--f-mono);font-size:.64rem;font-weight:600;color:var(--tx-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:.9em;}
@@ -326,7 +335,7 @@ textarea.inp{resize:vertical;min-height:40px;line-height:1.45;}
 .seg button.on[data-v="assigned"]{background:var(--green);color:#fff;}
 .seg button.on[data-v="backup"]{background:var(--amber);color:#fff;}
 .swatches{display:flex;gap:6px;flex-wrap:wrap;}
-.swatch{width:32px;height:32px;border:2px solid transparent;cursor:pointer;padding:0;outline-offset:2px;}
+.swatch{width:32px;height:32px;border:2px solid transparent;cursor:pointer;padding:0;outline-offset:2px;box-shadow:inset 0 0 0 1px var(--edge);}
 .swatch.on{border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--surface);}
 .note{font-family:var(--f-mono);font-size:var(--t-small);font-weight:500;color:var(--tx-2);line-height:1.55;}
 .note.warn{color:var(--amber);font-weight:700;}
@@ -347,7 +356,7 @@ textarea.inp{resize:vertical;min-height:40px;line-height:1.45;}
 .jump{position:sticky;top:0;z-index:6;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);padding:8px 0;margin:-6px 0 8px;}
 .jump::-webkit-scrollbar{display:none;}
 .jump-b{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;height:30px;padding:0 11px;background:var(--surface);border:1px solid var(--line-md);font-family:var(--f-mono);font-size:var(--t-small);font-weight:800;color:var(--ink);cursor:pointer;white-space:nowrap;}
-.jump-b i{width:8px;height:8px;background:var(--pc);}
+.jump-b i{width:8px;height:8px;background:var(--pc);box-shadow:inset 0 0 0 1px var(--edge);}
 .jump-b:hover{border-color:var(--line-hi);}
 .grp-head{position:sticky;top:44px;z-index:4;display:flex;align-items:center;gap:8px;background:var(--bg);padding:10px 0 6px;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-2);}
 .grp-head b{margin-left:auto;color:var(--tx-3);font-weight:700;}
@@ -401,18 +410,22 @@ textarea.inp{resize:vertical;min-height:40px;line-height:1.45;}
   .inv-list{padding:0 12px 100px;}
   .grp-head{padding:8px 0 5px;}
   .inv-grp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
-  .row,.selecting .row{display:block !important;position:relative;min-height:0;padding:8px 8px 7px 9px;margin:0;border-left-width:4px;}
+  .row,.selecting .row{display:block !important;position:relative;min-height:0;padding:7px 6px 6px 8px;margin:0;border-left-width:4px;}
   .row-sub{display:none !important;}
   .row-label{display:block;font-size:1rem;line-height:1.05;padding-right:12px;}
-  .row-m{display:flex;align-items:center;gap:5px;min-width:0;margin-top:4px;min-height:1.1em;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:600;color:var(--tx-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row-m{display:flex;align-items:center;gap:5px;min-width:0;margin-top:3px;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:600;color:var(--tx-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .row-m em{font-style:normal;color:var(--tx-3);}
+  .row-m:empty{display:none;}
   .row-m .tile-note{position:static;flex-shrink:0;}
   .st-txt{display:none;}
   .row .status{position:absolute;top:10px;right:8px;}
   .row .status::before{width:8px;height:8px;}
+  .row .status.backup::before{width:14px;height:14px;}
   .selecting .row .status{display:none;}
   .row-check{position:absolute;top:7px;right:6px;width:16px;height:16px;}
 }
+
+@media (max-width:640px) and (min-width:350px){ .inv-grp{grid-template-columns:repeat(4,minmax(0,1fr));} .row-label{font-size:.95rem;} }
 
 /* ─── TOAST ─── */
 .toasts{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));top:auto;transform:none;z-index:9500;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100% - 32px);}
@@ -425,57 +438,60 @@ textarea.inp{resize:vertical;min-height:40px;line-height:1.45;}
 /* Matrix */
 .main-body.mx-mode{overflow:hidden;display:flex;flex-direction:column;}
 .mx-view{flex:1;min-height:0;display:flex;flex-direction:column;}
-.mx-bar{position:static;flex-wrap:wrap;flex-shrink:0;}
-.mx-chips{display:flex;align-items:stretch;flex-wrap:wrap;min-height:44px;flex:1 1 auto;}
-.mx-sep{width:1px;background:var(--line-md);margin:8px 4px;}
-.mx-pchip i{display:inline-block;width:8px;height:8px;background:var(--pc);margin-right:6px;}
-.mx-range.on{background:var(--amber);color:#111;font-weight:800;}
-.mx-legend{display:flex;flex-wrap:wrap;gap:6px 18px;padding:10px clamp(16px,2.2vw,28px);font-family:var(--f-mono);font-size:var(--t-micro);font-weight:700;letter-spacing:var(--ls-normal);text-transform:uppercase;color:var(--tx-3);flex-shrink:0;}
+.mx-bar{position:static;flex-wrap:nowrap;flex-shrink:0;flex-direction:row !important;}
+.mx-bar .f-search{flex:1 1 120px;min-width:0;border-bottom:none;}
+.mx-range.on{background:var(--amber);color:#111;}
+.mx-legend{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:16px;padding:8px clamp(16px,2.2vw,28px);white-space:nowrap;font-family:var(--f-mono);font-size:var(--t-micro);font-weight:700;letter-spacing:var(--ls-normal);text-transform:uppercase;color:var(--tx-3);flex-shrink:0;}
 .mx-legend span{display:flex;align-items:center;gap:7px;}
 .mx-key{display:inline-grid;place-items:center;width:16px;height:14px;font-style:normal;font-size:9px;font-weight:800;color:var(--ink);border:1px solid var(--line-hi);}
 .mx-key.a{background:var(--ink);border-color:var(--ink);}
 .mx-key.b{border:2px solid var(--ink);}
 .mx-key.e{background:repeating-linear-gradient(45deg,var(--line-hi) 0 2px,transparent 2px 5px);}
+.mx-key.s{display:inline-flex;border:none;} .mx-key.s i{flex:1;height:100%;background:var(--ink);} .mx-key.s i+i{background:var(--tx-3);}
+.mx-tabs{display:flex;align-items:stretch;flex-shrink:0;border-left:1px solid var(--line-md);}
+.mx-tab{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;background:transparent;border:none;border-bottom:2px solid transparent;font-family:var(--f-mono);font-size:var(--t-small);font-weight:800;letter-spacing:var(--ls-wide);color:var(--tx-2);cursor:pointer;}
+.mx-tab b{font-weight:700;color:var(--tx-3);}
+.mx-tab.on{color:var(--ink);border-bottom-color:var(--ink);}
+.mx-tab.on b{color:var(--tx-2);}
+.mx-range{min-height:44px;padding:0 14px;flex-shrink:0;background:transparent;border:none;border-left:1px solid var(--line-md);font-family:var(--f-mono);font-size:var(--t-small);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-1);cursor:pointer;}
 .mx-scroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;margin:0 clamp(12px,2.2vw,28px) clamp(12px,2vh,20px);border:1px solid var(--line-md);background:var(--surface);}
 .mx{border-collapse:separate;border-spacing:0;font-family:var(--f-mono);}
 .mx th,.mx td{padding:0;border-bottom:1px solid var(--line);}
 .mx thead th{position:sticky;top:0;z-index:3;background:var(--surface);border-bottom:2px solid var(--ink);}
 .mx thead th.mx-corner{left:0;z-index:5;text-align:left;vertical-align:bottom;padding:0 12px 8px;font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--tx-3);border-right:1px solid var(--line-md);}
 .mx-ch{min-width:56px;padding:0 4px 8px;vertical-align:bottom;text-align:center;border-right:1px solid var(--line);}
-.mx-cbar{display:block;height:4px;background:var(--pc);margin:0 -4px 8px;}
+.mx-cbar{display:block;height:4px;background:var(--pc);margin:0 -4px 8px;box-shadow:inset 0 0 0 1px var(--edge);}
 .mx-code{display:block;font-weight:800;font-size:var(--t-small);letter-spacing:var(--ls-normal);color:var(--ink);white-space:nowrap;}
 .mx-cnt{display:block;font-size:10px;font-weight:700;color:var(--tx-3);margin-top:2px;}
 .mx-rh{position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--line-md);text-align:left;min-width:128px;max-width:170px;}
 .mx-dev{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:4px 12px;background:none;border:none;color:var(--ink);font-family:var(--f-mono);text-align:left;cursor:pointer;}
 .mx-dev b{font-weight:800;font-size:var(--t-small);}
 .mx-dev span{font-size:10px;font-weight:600;color:var(--tx-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
-.mx-dot{width:7px;height:7px;flex-shrink:0;}
+.mx-dot{width:7px;height:7px;flex-shrink:0;box-shadow:inset 0 0 0 1px var(--edge);}
 .mx-dot.none{border:1px solid var(--line-hi);}
 .mx-td{text-align:center;border-right:1px solid var(--line);}
 .mx-x{display:grid;place-items:center;width:40px;height:36px;margin:4px auto;border:1px solid var(--line-md);background:transparent;cursor:pointer;font-family:var(--f-mono);font-size:12px;font-weight:800;color:var(--pc);transition:background .15s,border-color .15s,transform .1s;}
 .mx-x:active{transform:scale(.9);}
-.mx-x.a{background:var(--pc);border-color:var(--pc);}
+.mx-x.a{background:var(--pc);border-color:var(--pc);box-shadow:inset 0 0 0 1px var(--edge);}
 .mx-x.b{border:2px solid var(--pc);}
+.mx-x.shared{position:relative;overflow:hidden;border:1px solid var(--line-md);background:transparent;}
+.mx-split{position:absolute;inset:0;display:flex;box-shadow:inset 0 0 0 1px var(--edge);}
+.mx-split i{flex:1;}
+.mx-split.q{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.mx-split.tint i{opacity:.45;}
+.mx-bk{position:relative;z-index:1;color:var(--ink);font-weight:800;}
 .mx-x.elsewhere{background:repeating-linear-gradient(45deg,var(--line-md) 0 3px,transparent 3px 7px);}
 .mx-x.anchor{outline:3px solid var(--amber);outline-offset:1px;}
-.mx-x.shared{position:relative;}
-.mx-x.shared::after,.mx-key.s::after{content:'';position:absolute;top:3px;right:3px;width:0;height:0;border-left:7px solid transparent;border-top:7px solid var(--surface);}
-.mx-key.s{position:relative;}
 .mx-dots{display:flex;gap:2px;flex-shrink:0;}
 .tile-shared{margin-left:6px;font-size:9px;font-weight:800;letter-spacing:var(--ls-normal);color:var(--tx-3);vertical-align:middle;}
 .fld-hint{font-style:normal;font-weight:600;letter-spacing:0;text-transform:none;color:var(--tx-3);margin-left:6px;}
 .pchips{display:flex;flex-wrap:wrap;gap:6px;}
 .pchip{display:flex;align-items:center;gap:7px;min-height:40px;padding:0 12px;font-family:var(--f-mono);font-size:var(--t-small);font-weight:800;letter-spacing:var(--ls-normal);background:transparent;color:var(--ink);border:1px solid var(--line-hi);cursor:pointer;}
-.pchip i{width:9px;height:9px;background:var(--pc);}
-.pchip.on{background:var(--pc);border-color:var(--pc);color:#fff;}
-.pchip.on i{background:#fff;}
+.pchip i{width:9px;height:9px;background:var(--pc);box-shadow:inset 0 0 0 1px var(--edge);}
+.pchip.on{background:var(--pc);border-color:var(--pc);color:var(--pfg,#fff);box-shadow:inset 0 0 0 1px var(--edge);}
+.pchip.on i{background:var(--pfg,#fff);}
 .mx-x:disabled{cursor:default;}
 .mx-row:hover th,.mx-row:hover td{background:var(--surface-2);}
-.mx-grp th,.mx-grp td{background:var(--surface-2);border-bottom:1px solid var(--line-md);}
-.mx-gbtn{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:0 12px;background:none;border:none;color:var(--ink);font-family:var(--f-mono);font-size:var(--t-micro);font-weight:800;letter-spacing:var(--ls-wide);text-transform:uppercase;cursor:pointer;white-space:nowrap;}
-.mx-gbtn b{color:var(--tx-3);}
-.mx-gchev{display:inline-block;transition:transform .15s;}
-.mx-gchev.open{transform:rotate(90deg);}
 .mx-none{padding:24px;text-align:center;font-family:var(--f-mono);font-size:var(--t-small);color:var(--tx-3);}
 .toasts{align-items:flex-start;flex-direction:column-reverse;}
 .bulkbar.show ~ .toasts{bottom:calc(84px + env(safe-area-inset-bottom,0px));}
@@ -514,7 +530,7 @@ const TYPE_NAME = {BP:'Beltpacks', MIC:'Mics', IFB:'IFBs'};
 const TYPE_ONE = {BP:'Beltpack', MIC:'Mic', IFB:'IFB'};
 const STATUS = ['unassigned','assigned','backup'];
 const STATUS_NAME = {unassigned:'Unassigned', assigned:'Assigned', backup:'Backup'};
-const PALETTE = ['#FF5500','#0099FF','#BB44FF','#00B8A3','#D4A017','#E0307A','#5B6B7F','#2E9E4F'];
+const PALETTE = ['#FEFF2F','#66E5E1','#55D691','#E757F3','#D8282E','#5936BB','#FFFFFF','#8A8A8A'];  // Color bars; first 6 are color-blind safe
 
 const SB_URL = 'https://saipvaleecyryrjnnufs.supabase.co';
 const SB_KEY = 'sb_publishable_DyTGUldcqxU9t7-170atFA_n-iTjNPv';
@@ -535,6 +551,18 @@ const devToRow = d => ({id:d.id, type:d.type, label:d.label, model:d.model||'', 
 
 /* A device can be shared by several productions; status and "Assigned to" are the same across all of them */
 const inProd = (d, pid) => d.pids.includes(pid);
+/* Dark or light text, whichever reads better on a production color */
+function fgOn(hex){
+  const h = String(hex||'#888888').replace('#','');
+  const L = [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255).map(c=>c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4));
+  return (0.2126*L[0]+0.7152*L[1]+0.0722*L[2]) > 0.179 ? '#111111' : '#FFFFFF';
+}
+/* A shared device's productions in board/column order, so its split looks the same everywhere */
+function sortedProds(d){
+  const o = {}; activeProds().forEach((p,i)=>o[p.id]=i);
+  return prodsOf(d).slice().sort((a,b)=>(o[a.id]??99)-(o[b.id]??99));
+}
+const MAX_SHARE = 4;
 const prodsOf = d => d.pids.map(prodById).filter(Boolean);
 const prodNames = d => prodsOf(d).map(p=>p.name).join(' + ');
 async function loadAll(){
@@ -612,7 +640,7 @@ const UI = {
   f:{q:'', type:'all', status:'all', prod:'all'},
   selecting:false, sel:new Set(),
   open:{}, showArchived:false,
-  mx:{q:'', types:{BP:true,MIC:true,IFB:true}, hideProds:new Set(), closed:{}, range:false, anchor:null}
+  mx:{q:'', type:'BP', range:false, anchor:null}
 };
 const UIKEY = 'showgear.ui';
 try{ UI.open = JSON.parse(localStorage.getItem(UIKEY)||'{}').open || {}; }catch(e){}
@@ -715,7 +743,7 @@ function viewBoard(){
   }).join('') + `</div>`;
 
   if(prods.length>1){
-    h += `<nav class="jump" aria-label="Jump to production">${prods.map(p=>`<button class="jump-b" data-action="jump" data-id="${p.id}" style="--pc:${p.color}"><i></i>${esc(p.code||p.name)}</button>`).join('')}</nav>`;
+    h += `<nav class="jump" aria-label="Jump to production">${prods.map(p=>`<button class="jump-b" data-action="jump" data-id="${p.id}" style="--pc:${p.color};--pfg:${fgOn(p.color)}"><i></i>${esc(p.code||p.name)}</button>`).join('')}</nav>`;
   }
   if(!prods.length){
     h += `<div class="empty"><h4>No active productions</h4><p>Create one to start assigning gear.</p>${UI.edit?'<button class="btn primary" data-action="new-prod">New production</button>':''}</div>`;
@@ -724,7 +752,7 @@ function viewBoard(){
     const c = countFor(p.id);
     const open = isOpen(p.id, prods.length===1);
     const meta = [p.code && p.code!==p.name ? p.code : '', fmtRange(p), p.location].filter(Boolean).map(esc).join('  /  ');
-    h += `<section class="psec${open?' open':''}" id="ps-${p.id}" style="--pc:${p.color}">
+    h += `<section class="psec${open?' open':''}" id="ps-${p.id}" style="--pc:${p.color};--pfg:${fgOn(p.color)}">
       <div class="psec-hdr" data-action="toggle-prod" data-id="${p.id}" tabindex="0" role="button" aria-expanded="${open}">
         <span class="psec-chev">›</span>
         <div class="psec-id"><div class="psec-name">${esc(p.name)}</div><div class="psec-meta">${meta}</div>
@@ -768,8 +796,8 @@ function viewBoard(){
 function tile(d,p,compact){
   const others = prodsOf(d).filter(x=>x.id!==p.id);
   const shared = others.length ? `<span class="tile-shared" title="Shared with ${esc(others.map(x=>x.name).join(', '))}">+${esc(others.map(x=>x.code||x.name).join(' '))}</span>` : '';
-  return `<button class="tile${others.length?' is-shared':''}" style="--pc:${p.color}" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${d.assignee?' — '+esc(d.assignee):''}${d.note?' — '+esc(d.note):''}">
-    <span class="tile-strip"></span><span class="tile-in"><span class="tile-label">${esc(d.label)}${shared}</span>${compact?'':`<span class="tile-who${d.assignee?'':' none'}">${d.assignee?esc(d.assignee):'—'}</span>`}</span>${d.note?'<i class="tile-note" aria-label="Has note"></i>':''}</button>`;
+  return `<button class="tile${others.length?' is-shared':''}" style="--pc:${p.color};--pfg:${fgOn(p.color)}" data-action="open-dev" data-id="${d.id}" title="${esc(d.label)}${d.assignee?' — '+esc(d.assignee):''}${d.note?' — '+esc(d.note):''}">
+    ${others.length?`<span class="tile-strip split">${sortedProds(d).map(x=>`<i style="background:${x.color}"></i>`).join('')}</span>`:'<span class="tile-strip"></span>'}<span class="tile-in"><span class="tile-label">${esc(d.label)}${shared}</span>${compact?'':`<span class="tile-who${d.assignee?'':' none'}">${d.assignee?esc(d.assignee):'—'}</span>`}</span>${d.note?'<i class="tile-note" aria-label="Has note"></i>':''}</button>`;
 }
 
 /* ── MATRIX (crosspoint routing, Dante-style) ──
@@ -781,48 +809,41 @@ function mxMatch(d, qq){
 }
 function mxVisibleRows(){
   const M = UI.mx, qq = M.q.trim().toLowerCase();
-  return TYPES.filter(t=>M.types[t]).map(t=>[t, DB.devices.filter(d=>d.type===t && mxMatch(d,qq)).sort(byLabel)]);
+  return [[M.type, DB.devices.filter(d=>d.type===M.type && mxMatch(d,qq)).sort(byLabel)]];
+}
+function mxSplit(ps, tint){
+  return `<span class="mx-split${ps.length===4?' q':''}${tint?' tint':''}">${ps.map(x=>`<i style="background:${x.color}"></i>`).join('')}</span>`;
 }
 function viewMatrix(){
-  const M = UI.mx, all = activeProds(), prods = all.filter(p=>!M.hideProds.has(p.id));
+  const M = UI.mx, prods = activeProds();
   let h = header('Matrix', UI.edit ? 'Tap a crosspoint: assigned, then backup, then clear' : 'Where every device is routed');
   h += `<div class="fbar mx-bar">
     <label class="f-search"><input id="mxq" type="search" placeholder="Search device or person" value="${esc(M.q)}" autocomplete="off" aria-label="Search devices"></label>
-    <div class="mx-chips">
-      ${TYPES.map(t=>`<button class="f-pill${M.types[t]?' active':''}" data-action="mx-type" data-t="${t}" aria-pressed="${M.types[t]}">${t}</button>`).join('')}
-      ${all.length?'<span class="mx-sep"></span>':''}
-      ${all.map(p=>`<button class="f-pill mx-pchip${M.hideProds.has(p.id)?'':' active'}" data-action="mx-prod" data-id="${p.id}" style="--pc:${p.color}" aria-pressed="${!M.hideProds.has(p.id)}"><i></i>${esc(p.code||p.name)}</button>`).join('')}
-      ${UI.edit&&prods.length?`<span class="mx-sep"></span><button class="f-pill mx-range${M.range?' on':''}" data-action="mx-range">${M.range?(M.anchor?'Tap last cell':'Tap first cell'):'Range'}</button>`:''}
-    </div></div>`;
-  if(!all.length) return `<div class="mx-view">${h}<div class="view-pad"><div class="empty"><h4>No active productions</h4><p>Create a production, then route gear to it here.</p>${UI.edit?'<button class="btn primary" data-action="new-prod">New production</button>':''}</div></div></div>`;
-  if(!prods.length) return `<div class="mx-view">${h}<div class="view-pad"><div class="empty"><h4>All productions hidden</h4><p>Turn one back on above.</p></div></div></div>`;
-  const groups = mxVisibleRows();
-  h += `<div class="mx-legend"><span><i class="mx-key a"></i>Assigned</span><span><i class="mx-key b">B</i>Backup</span><span><i class="mx-key e"></i>On another production</span><span><i class="mx-key a s"></i>Shared</span></div>`;
-  h += `<div class="mx-scroll"><table class="mx"><thead><tr><th class="mx-corner" scope="col">Device</th>${prods.map(p=>{
-      const c = countFor(p.id), a = TYPES.filter(t=>M.types[t]).reduce((n,t)=>n+c[t].a,0), b = TYPES.filter(t=>M.types[t]).reduce((n,t)=>n+c[t].b,0);
-      return `<th class="mx-ch" scope="col" style="--pc:${p.color}" title="${esc(p.name)}"><span class="mx-cbar"></span><span class="mx-code">${esc(p.code||p.name)}</span><span class="mx-cnt">${a}${b?'+'+b:''}</span></th>`;
+    <div class="mx-tabs" role="tablist" aria-label="Device type">${TYPES.map(t=>`<button type="button" role="tab" class="mx-tab${M.type===t?' on':''}" data-action="mx-tab" data-t="${t}" aria-selected="${M.type===t}">${t}<b>${DB.devices.filter(d=>d.type===t).length}</b></button>`).join('')}</div>
+    ${UI.edit&&prods.length?`<button type="button" class="mx-range${M.range?' on':''}" data-action="mx-range">${M.range?(M.anchor?'Tap last':'Tap first'):'Range'}</button>`:''}
+  </div>`;
+  if(!prods.length) return `<div class="mx-view">${h}<div class="view-pad"><div class="empty"><h4>No active productions</h4><p>Create a production, then route gear to it here.</p>${UI.edit?'<button class="btn primary" data-action="new-prod">New production</button>':''}</div></div></div>`;
+  const list = mxVisibleRows()[0][1];
+  h += `<div class="mx-legend"><span><i class="mx-key a"></i>Assigned</span><span><i class="mx-key b">B</i>Backup</span><span><i class="mx-key e"></i>Other show</span><span><i class="mx-key s"><i></i><i></i></i>Shared</span></div>`;
+  h += `<div class="mx-scroll"><table class="mx"><thead><tr><th class="mx-corner" scope="col">${TYPE_NAME[M.type]}</th>${prods.map(p=>{
+      const c = countFor(p.id)[M.type];
+      return `<th class="mx-ch" scope="col" style="--pc:${p.color};--pfg:${fgOn(p.color)}" title="${esc(p.name)}"><span class="mx-cbar"></span><span class="mx-code">${esc(p.code||p.name)}</span><span class="mx-cnt">${c.a}${c.b?'+'+c.b:''}</span></th>`;
     }).join('')}</tr></thead><tbody>`;
-  let any = false;
-  groups.forEach(([t, list])=>{
-    if(!list.length) return; any = true;
-    const closed = !!M.closed[t];
-    h += `<tr class="mx-grp"><th class="mx-rh" scope="rowgroup"><button type="button" class="mx-gbtn" data-action="mx-group" data-t="${t}" aria-expanded="${!closed}"><span class="mx-gchev${closed?'':' open'}">›</span><span class="chip ${t}">${t}</span>${TYPE_NAME[t]}<b>${list.length}</b></button></th><td colspan="${prods.length}"></td></tr>`;
-    if(closed) return;
-    list.forEach(d=>{
-      const cur = prodsOf(d);
-      h += `<tr class="mx-row"><th class="mx-rh" scope="row"><button type="button" class="mx-dev" data-action="open-dev" data-id="${d.id}"><span class="mx-dots">${cur.length?cur.map(c=>`<i class="mx-dot" style="background:${c.color}" title="${esc(c.name)}"></i>`).join(''):'<i class="mx-dot none"></i>'}</span><b>${esc(d.label)}</b>${d.assignee?`<span>${esc(d.assignee)}</span>`:''}</button></th>${prods.map(p=>mxCell(d,p)).join('')}</tr>`;
-    });
+  list.forEach(d=>{
+    const cur = sortedProds(d);
+    h += `<tr class="mx-row"><th class="mx-rh" scope="row"><button type="button" class="mx-dev" data-action="open-dev" data-id="${d.id}"><span class="mx-dots">${cur.length?cur.map(c=>`<i class="mx-dot" style="background:${c.color}" title="${esc(c.name)}"></i>`).join(''):'<i class="mx-dot none"></i>'}</span><b>${esc(d.label)}</b>${d.assignee?`<span>${esc(d.assignee)}</span>`:''}</button></th>${prods.map(p=>mxCell(d,p)).join('')}</tr>`;
   });
-  if(!any) h += `<tr><td class="mx-none" colspan="${prods.length+1}">Nothing matches. Try a different search or filter.</td></tr>`;
+  if(!list.length) h += `<tr><td class="mx-none" colspan="${prods.length+1}">Nothing matches. Try a different search.</td></tr>`;
   h += `</tbody></table></div>`;
   return `<div class="mx-view">${h}</div>`;
 }
 function mxCell(d, p){
-  const here = inProd(d,p.id), st = here ? d.status : 'none', shared = here && d.pids.length>1;
+  const here = inProd(d,p.id), st = here ? d.status : 'none', ps = here ? sortedProds(d) : [], shared = ps.length>1;
   const anchor = UI.mx.anchor && UI.mx.anchor.id===d.id && UI.mx.anchor.pid===p.id;
+  const inner = (shared ? mxSplit(ps, st==='backup') : '') + (st==='backup' ? '<b class="mx-bk">B</b>' : '');
   const cls = 'mx-x' + (st==='assigned'?' a':st==='backup'?' b':'') + (shared?' shared':'') + (d.pids.length&&!here?' elsewhere':'') + (anchor?' anchor':'');
-  const what = (st==='assigned'?'assigned':st==='backup'?'backup':(d.pids.length?'on another production':'not routed')) + (shared?', shared':'');
-  return `<td class="mx-td"><button type="button" class="${cls}" style="--pc:${p.color}" ${UI.edit?`data-action="mx-cell" data-id="${d.id}" data-p="${p.id}"`:'disabled'} aria-label="${esc(d.label+' to '+(p.code||p.name)+': '+what)}">${st==='backup'?'B':''}</button></td>`;
+  const what = (st==='assigned'?'assigned':st==='backup'?'backup':(d.pids.length?'on another production':'not routed')) + (shared?', shared with '+ps.filter(x=>x.id!==p.id).map(x=>x.code||x.name).join(' and '):'');
+  return `<td class="mx-td"><button type="button" class="${cls}" style="--pc:${p.color}" ${UI.edit?`data-action="mx-cell" data-id="${d.id}" data-p="${p.id}"`:'disabled'} aria-label="${esc(d.label+' to '+(p.code||p.name)+': '+what)}">${inner}</button></td>`;
 }
 
 /* Toast with action buttons — nothing happens unless a button is tapped */
@@ -856,7 +877,7 @@ function mxFlushLog(){
 /* Route one device. kind: assign (free→this show), cycle (single show), share (add this show),
    unshare (drop this show only), move (this show only, as assigned) */
 function mxRouteOne(d, pid, kind){
-  if(kind==='share'){ setDeviceState(d, d.status, [...d.pids, pid], d.assignee); mxQueueLog(d.label,'share',pid); return; }
+  if(kind==='share'){ if(d.pids.length>=MAX_SHARE) return false; setDeviceState(d, d.status, [...d.pids, pid], d.assignee); mxQueueLog(d.label,'share',pid); return; }
   if(kind==='unshare'){ setDeviceState(d, d.status, d.pids.filter(x=>x!==pid), d.assignee); mxQueueLog(d.label,'unshare',pid); return; }
   if(kind==='move'){ setDeviceState(d, 'assigned', [pid], ''); mxQueueLog(d.label,'assigned',pid); return; }
   if(kind==='assign'){ setDeviceState(d, 'assigned', inProd(d,pid)?d.pids:[...d.pids,pid], inProd(d,pid)?d.assignee:''); mxQueueLog(d.label,'assigned',pid); return; }
@@ -870,8 +891,9 @@ function mxTap(devId, pid){
   if(UI.mx.range) return mxRangeTap(d, p);
   const here = inProd(d, pid);
   if(!here && d.pids.length){
-    actionToast(`${d.label} is ${d.status==='backup'?'a backup for':'on'} ${prodNames(d)||'another production'}`, [
-      {label:'Share', fn:()=>{ mxApply([d], pid, 'share'); toast(`${d.label} shared with ${p.name}`); }},
+    const full = d.pids.length >= MAX_SHARE;
+    actionToast(`${d.label} is ${d.status==='backup'?'a backup for':'on'} ${prodNames(d)||'another production'}${full?`. That's the limit of ${MAX_SHARE} shows, so it can only move.`:''}`, [
+      ...(full ? [] : [{label:'Share', fn:()=>{ mxApply([d], pid, 'share'); toast(`${d.label} shared with ${p.name}`); }}]),
       {label:'Move here', fn:()=>{ mxApply([d], pid, 'move'); toast(`${d.label} moved to ${p.name}`); }}]);
     return;
   }
@@ -899,9 +921,10 @@ function mxRangeTap(d, p){
     const n = plain.length + (mode==='skip' ? 0 : conflicts.length);
     if(!n){ render(); toast('Nothing to change'); return; }
     plain.forEach(x=>mxRouteOne(x, p.id, 'assign'));
-    if(mode!=='skip') conflicts.forEach(x=>mxRouteOne(x, p.id, mode));
+    let full = 0;
+    if(mode!=='skip') conflicts.forEach(x=>{ if(mxRouteOne(x, p.id, mode)===false) full++; });
     save(); render();
-    toast(`${span[0].label} to ${span[span.length-1].label}: ${n} routed to ${p.name}`);
+    toast(`${span[0].label} to ${span[span.length-1].label}: ${n-full} routed to ${p.name}` + (full?`. ${full} already on ${MAX_SHARE} shows, left as is`:''));
   };
   if(conflicts.length){
     render();
@@ -952,8 +975,8 @@ function viewInventory(){
     h += `<div class="grp-head"><span class="chip ${t}">${t}</span><span>${TYPE_NAME[t]}</span><b>${grp.length}</b></div><div class="inv-grp">`;
     grp.forEach(d=>{
     const ps = prodsOf(d), p = ps[0] || null;
-    const mline = d.assignee ? esc(d.assignee) : (ps.length ? `<em>${esc(prodNames(d))}</em>` : '');
-    h += `<div class="row${UI.sel.has(d.id)?' sel':''}" style="${p?`--pc:${p.color}`:''}" data-action="row" data-id="${d.id}" tabindex="0" role="button">
+    const mline = d.assignee ? esc(d.assignee) : (ps.length ? `<em>${esc(sortedProds(d).map(x=>x.code||x.name).join(' + '))}</em>` : '');
+    h += `<div class="row${UI.sel.has(d.id)?' sel':''}" style="${p?`--pc:${p.color};--pfg:${fgOn(p.color)}`:''}" data-action="row" data-id="${d.id}" tabindex="0" role="button">
       <span class="row-check"></span>
       <span class="chip ${d.type}">${d.type}</span>
       <span class="row-label">${esc(d.label)}</span>
@@ -1008,7 +1031,7 @@ function viewProductions(){
   const card = p => {
     const c = countFor(p.id);
     const tot = TYPES.map(t=>`${t} ${c[t].a}${c[t].b?'+'+c[t].b:''}`).join('   ');
-    return `<div class="prod-card${p.archived?' archived':''}" style="--pc:${p.color}" data-action="open-prod" data-id="${p.id}" tabindex="0" role="button">
+    return `<div class="prod-card${p.archived?' archived':''}" style="--pc:${p.color};--pfg:${fgOn(p.color)}" data-action="open-prod" data-id="${p.id}" tabindex="0" role="button">
       <div class="prod-main"><div class="prod-name">${esc(p.name)}</div>
       <div class="prod-meta">${esc(fmtRange(p))}${p.location?'  /  '+esc(p.location):''}</div>
       ${p.notes?`<div class="prod-notes">${esc(p.notes)}</div>`:''}</div>
@@ -1069,7 +1092,7 @@ function assignFields(status, pids, who, note, showNote=true){
   return `<div class="fld"><span class="fld-label">Status</span>
     <div class="seg" id="seg">${STATUS.map(s=>`<button type="button" data-v="${s}" class="${status===s?'on':''}">${STATUS_NAME[s]}</button>`).join('')}</div></div>
     <div id="assignWrap" style="${status==='unassigned'?'display:none':''}">
-      ${hasProds?`<div class="fld"><span class="fld-label">Productions <em class="fld-hint">Pick more than one to share it</em></span><div class="pchips" id="aProds">${all.map(p=>`<button type="button" class="pchip${sel.has(p.id)?' on':''}" data-id="${p.id}" style="--pc:${p.color}" aria-pressed="${sel.has(p.id)}"><i></i>${esc(p.code||p.name)}${p.archived?' (arch.)':''}</button>`).join('')}</div></div>`
+      ${hasProds?`<div class="fld"><span class="fld-label">Productions <em class="fld-hint">Pick more than one to share it</em></span><div class="pchips" id="aProds">${all.map(p=>`<button type="button" class="pchip${sel.has(p.id)?' on':''}" data-id="${p.id}" style="--pc:${p.color};--pfg:${fgOn(p.color)}" aria-pressed="${sel.has(p.id)}"><i></i>${esc(p.code||p.name)}${p.archived?' (arch.)':''}</button>`).join('')}</div></div>`
       :`<p class="note warn" style="margin-bottom:14px">Create a production first.</p>`}
       <div class="fld"><label class="fld-label" for="aWho">Assigned to</label><input class="inp" id="aWho" value="${esc(who)}" placeholder="Person, position or channel" autocomplete="off"></div>
     </div>
@@ -1077,7 +1100,11 @@ function assignFields(status, pids, who, note, showNote=true){
 }
 function wireProds(){
   const box = $('#aProds');
-  if(box) box.addEventListener('click', e=>{ const b=e.target.closest('.pchip'); if(!b) return; b.classList.toggle('on'); b.setAttribute('aria-pressed', b.classList.contains('on')); });
+  if(box) box.addEventListener('click', e=>{
+    const b=e.target.closest('.pchip'); if(!b) return;
+    if(!b.classList.contains('on') && box.querySelectorAll('.pchip.on').length>=MAX_SHARE){ toast(`A device can be on up to ${MAX_SHARE} shows`, true); return; }
+    b.classList.toggle('on'); b.setAttribute('aria-pressed', b.classList.contains('on'));
+  });
   return () => [...document.querySelectorAll('#aProds .pchip.on')].map(b=>b.dataset.id);
 }
 function wireSeg(){
@@ -1394,7 +1421,7 @@ function openExport(){
     body:`<div class="xp-list">
       <button class="xp" data-x="xlsx"><span class="xp-kind">XLSX</span><span><b>Excel workbook</b><i>Summary, all gear, and a sheet per production</i></span></button>
       <button class="xp" data-x="summary"><span class="xp-kind">PDF</span><span><b>Summary</b><i>Every production’s counts plus the unassigned pool</i></span></button>
-      ${prods.map(p=>`<button class="xp" data-x="prod" data-id="${p.id}" style="--pc:${p.color}"><span class="xp-kind">PDF</span><span><b>${esc(p.name)}</b><i>${esc(fmtRange(p))}</i></span></button>`).join('')}
+      ${prods.map(p=>`<button class="xp" data-x="prod" data-id="${p.id}" style="--pc:${p.color};--pfg:${fgOn(p.color)}"><span class="xp-kind">PDF</span><span><b>${esc(p.name)}</b><i>${esc(fmtRange(p))}</i></span></button>`).join('')}
     </div>`});
   $('#modal').querySelector('.xp-list').addEventListener('click', e=>{
     const b = e.target.closest('.xp'); if(!b) return;
@@ -1489,21 +1516,32 @@ async function exportProdPdf(pid){
   doc.text(TYPES.map(t=>`${TYPE_NAME[t]}: ${c[t].a} assigned, ${c[t].b} backup`).join('     '), 36, y);
   if(p.notes){ y+=14; doc.text(doc.splitTextToSize('Notes: '+p.notes, doc.internal.pageSize.getWidth()-72), 36, y); }
   y += 26;
+  const H = doc.internal.pageSize.getHeight(), COLS = 8, ROW = 20;
+  const also = d => sortedProds(d).filter(x=>x.id!==p.id).map(x=>x.code||x.name);
+  const lbl = d => { const a = also(d); return a.length ? `${d.label}  +${a.join(' ')}` : d.label; };
   TYPES.forEach(t=>{
     const prim = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='assigned').sort(byLabel);
     const bk = DB.devices.filter(d=>inProd(d,p.id) && d.type===t && d.status==='backup').sort(byLabel);
     if(!prim.length && !bk.length) return;
+    // Nothing written in "Assigned to" or "Note"? A compact grid of labels instead of mostly-empty columns
+    const compact = [...prim, ...bk].every(d=>!d.assignee && !d.note);
+    const rowsFor = n => compact ? Math.ceil(n/COLS) : n;
+    const est = 24 + (prim.length ? (rowsFor(prim.length)+1)*ROW+10 : 0) + (bk.length ? (rowsFor(bk.length)+1)*ROW+10 : 0);
+    if(y + est > H - 40 && est < H - 110){ doc.addPage(); y = 50; }   // keep a short section on one page
     y = sectionTitle(doc, y, TYPE_NAME[t], `${prim.length} assigned${bk.length?', '+bk.length+' backup':''}`);
-    if(prim.length){
-      doc.autoTable({...TABLE, startY:y, head:[['Device','Assigned to','Note']], body:prim.map(d=>[d.label, d.assignee||'', d.note||'']),
-        columnStyles:{0:{cellWidth:70, fontStyle:'bold'}, 1:{cellWidth:170}}});
+    const grid = (list, head, fill) => {
+      const body = []; for(let k=0;k<list.length;k+=COLS){ const r = list.slice(k,k+COLS).map(lbl); while(r.length<COLS) r.push(''); body.push(r); }
+      doc.autoTable({...TABLE, startY:y, head:[[{content:head, colSpan:COLS}]], body, headStyles:{...TABLE.headStyles, fillColor:fill},
+        styles:{...TABLE.styles, fontStyle:'bold', halign:'left'}});
       y = doc.lastAutoTable.finalY + 10;
-    }
-    if(bk.length){
-      doc.autoTable({...TABLE, startY:y, head:[['Backup','Assigned to','Note']], body:bk.map(d=>[d.label, d.assignee||'', d.note||'']),
-        headStyles:{...TABLE.headStyles, fillColor:[192,120,24]}, columnStyles:{0:{cellWidth:70, fontStyle:'bold'}, 1:{cellWidth:170}}});
+    };
+    const table = (list, head, fill) => {
+      doc.autoTable({...TABLE, startY:y, head:[[head,'Assigned to','Note']], body:list.map(d=>[lbl(d), d.assignee||'', d.note||'']),
+        headStyles:{...TABLE.headStyles, fillColor:fill}, columnStyles:{0:{cellWidth:110, fontStyle:'bold'}, 1:{cellWidth:150}}});
       y = doc.lastAutoTable.finalY + 10;
-    }
+    };
+    if(prim.length) (compact?grid:table)(prim, compact?'Assigned':'Device', [17,17,17]);
+    if(bk.length) (compact?grid:table)(bk, 'Backup', [192,120,24]);
     y += 16;
   });
   if(!DB.devices.some(d=>inProd(d,p.id))){ doc.setFontSize(10); doc.setTextColor(120,120,120); doc.text('No gear assigned yet.', 36, y); }
@@ -1562,14 +1600,9 @@ document.addEventListener('click', e=>{
   switch(a){
     case 'tab': UI.tab = el.dataset.tab; if(UI.tab!=='inventory'){UI.selecting=false;UI.sel.clear();} UI.mx.range=false; UI.mx.anchor=null; $('#main').scrollTop=0; render(); break;
     case 'mx-cell': if(UI.edit) mxTap(id, el.dataset.p); break;
-    case 'mx-type': {
-      const t = el.dataset.t, on = TYPES.filter(x=>UI.mx.types[x]);
-      if(UI.mx.types[t] && on.length===1){ toast('At least one type has to stay on'); break; }
-      UI.mx.types[t] = !UI.mx.types[t]; render(); break;
-    }
-    case 'mx-prod': UI.mx.hideProds.has(id) ? UI.mx.hideProds.delete(id) : UI.mx.hideProds.add(id); if(UI.mx.anchor&&UI.mx.anchor.pid===id) UI.mx.anchor=null; render(); break;
+    case 'mx-tab': UI.mx.type = el.dataset.t; UI.mx.anchor = null; $('#main').scrollTop = 0; render(); break;
     case 'mx-range': UI.mx.range = !UI.mx.range; UI.mx.anchor = null; render(); if(UI.mx.range) toast('Range: tap the first cell, then the last'); break;
-    case 'mx-group': UI.mx.closed[el.dataset.t] = !UI.mx.closed[el.dataset.t]; render(); break;
+
     case 'toggle-mode':
       if(UI.edit){ UI.edit=false; UI.selecting=false; UI.sel.clear(); UI.mx.range=false; UI.mx.anchor=null; render(); toast('Locked. View only.'); }
       else openPin();
