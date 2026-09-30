@@ -1,0 +1,38 @@
+{
+ "id": "/showgear/",
+ "name": "ShowGear",
+ "short_name": "ShowGear",
+ "start_url": "/showgear/",
+ "scope": "/showgear/",
+ "display": "standalone",
+ "orientation": "any",
+ "background_color": "#111111",
+ "theme_color": "#111111",
+ "description": "Which production has which beltpacks, mics and IFBs",
+ "icons": [
+  {
+   "src": "icons/showgear-any-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/showgear-any-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/showgear-maskable-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "maskable"
+  },
+  {
+   "src": "icons/showgear-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
